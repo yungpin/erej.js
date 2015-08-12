@@ -6,14 +6,20 @@
     <script src="../src/erej.js"></script>
 </head>
 <body>
-<div id="main1">1111111</div>
-<div id="main2">2222222</div>
+<div id="main1" name="12">1111111</div>
+<div id="main2" name="13">2222222</div>
 <div id="main3">3333333</div>
+
+<div id="main4">3333333</div>
 <script>
     window.onload = function() {
         var t = $('div');
         t.html('yes123456');
-        alert(t.html());
+
+        $('#main3').html('qwerqwer');
+        //alert(t.html());
+
+        //alert("123".startWith('1'));
     }
 </script>
 </body>
