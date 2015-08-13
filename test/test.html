@@ -2,25 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-COMPATIBLE" content="IE=edge">
     <title></title>
     <script src="../src/erej.js"></script>
 </head>
 <body>
 <div id="main1" name="12">1111111</div>
-<div id="main2" name="13">2222222</div>
+<div id="main2" name="13" action="test_123">2222222</div>
 <div id="main3">3333333</div>
 
-<div id="main4">3333333</div>
-<script>
-    window.onload = function() {
-        var t = $('div');
-        t.html('yes123456');
+<div id="main4">44444
+    <div id="main5" action="ok">55555
+        <div id="main6">666666
+            <div id="main7">777777</div>
+        </div>
+    </div>
+</div>
 
-        $('#main3').html('qwerqwer');
+<div id="log"></div>
+<script>
+    function log(str) {
+        $('#log').html($('#log').html()+"<br>"+str);
+    }
+    var f1 = function (e, data) {
+        log('click1 cur:'+ this.id+" src:"+ e.srcElement.id+" data:"+data);
+    };
+    var f2 = function (e, data) {
+        log('click2 cur:'+ this.id+" src:"+ e.srcElement.id+" data:"+data+" proxy:"+ e.proxyElement.id);
+    };
+
+    window.onload = function () {
+        log("onload");
+        //var t = $('div');
+        //t.html('yes123456');
+
+        $('#main4').on('click', f1, null, "data1");
+        $('#main4').on('click', f2, '[action="ok"]', "data2");
         //alert(t.html());
 
         //alert("123".startWith('1'));
     }
+
+    erej.ready(function () {
+        log("dom ready.");
+    });
 </script>
+<iframe src="http://www.taobao.com" width="400" height="400"></iframe>
 </body>
 </html>
