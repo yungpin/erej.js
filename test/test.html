@@ -4,15 +4,34 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-COMPATIBLE" content="IE=edge">
     <title></title>
+
+    <script>
+        var oldlog = function(){};
+        function mylog(str) {
+            if (document.getElementById('log2'))
+                document.getElementById('log2').innerHTML = document.getElementById('log2').innerHTML+"<br>"+str;
+
+            if (typeof oldlog == "function")
+                oldlog.apply(console, arguments);
+            else
+                oldlog(str);
+        }
+        if (typeof console == "undefined")
+            console = {};
+        if (console.log)
+            oldlog = console.log;
+        console.log = mylog;
+    </script>
     <script src="../src/erej.js"></script>
+
 </head>
 <body>
-<div id="main1" name="12">1111111</div>
-<div id="main2" name="13" action="test_123">2222222</div>
-<div id="main3">3333333</div>
+<div id="main1" action="ok" name="12">1111111</div>
+<div id="main2" name="13" action="test_123" class="b1">2222222</div>
+<div id="main3" class="a1">3333333</div>
 
 <div id="main4">44444
-    <div id="main5" action="ok">55555
+    <div id="main5" action="ok" class="a1 b1">55555
         <div id="main6">666666
             <div id="main7">777777</div>
         </div>
@@ -20,6 +39,7 @@
 </div>
 
 <div id="log"></div>
+<div id="log2" style="background-color: #000; color: #fff;"></div>
 <script>
     function log(str) {
         $('#log').html($('#log').html()+"<br>"+str);
@@ -41,6 +61,14 @@
         //alert(t.html());
 
         //alert("123".startWith('1'));
+
+        console.log('===============');
+        console.log("userAgent:"+window.navigator.userAgent);
+        console.log("appName:"+window.navigator.appName);
+        console.log("appVersion:"+window.navigator.appVersion);
+        console.log("appCodeName:"+window.navigator.appCodeName);
+        console.log("kernel:"+erej.browser.kernel()+" ver:"+erej.browser.ver());
+        console.log('===============');
     }
 
     erej.ready(function () {

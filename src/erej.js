@@ -14,6 +14,40 @@ var erej = function(selector, parent){
 
 erej.fn = erej.prototype;
 
+//var userAgent = navigator.userAgent.toLowerCase();
+erej.browser = {
+    agent: navigator.userAgent.toLowerCase(),
+    isIE: function () {
+        return (this.kernel()=='IE');
+    },
+    ver: function () {
+        var k = this.kernel();
+        switch (k) {
+            case 'IE':
+                return (/msie\s([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
+                break;
+            case 'Chrome':
+                return (/chrome\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
+                break;
+            case 'Firefox':
+                return (/firefox\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
+                break;
+        }
+        return 0;
+    },
+    kernel: function() {
+        if (this.agent.indexOf('msie')!=-1)
+            return 'IE';
+        else if (this.agent.indexOf('chrome/')!=-1)
+            return 'Chrome'
+        else if (this.agent.indexOf('firefox/')!=-1)
+            return 'Firefox'
+        return 'unknown';
+    }
+    
+
+};
+
 erej.init = function(selector, parent) {
     var _self = this;
     _self.length = 0;
@@ -29,14 +63,26 @@ erej.init = function(selector, parent) {
     return erej.z(_self, erej.fn);
 };
 
+// 始终返回数组
 erej.singleParse = function (selector, parent) {
+    function walkNodes(par, callback) {
+        var ce = arguments.callee;
+
+        erej.each(par.childNodes, function (elem) {
+            if (elem.nodeType == 1) {
+                callback.call(elem, elem);
+                ce(elem, callback);
+            }
+        });
+    }
+
     var s = erej.s(selector).trim();
     if (s.startWith('#')) {
         // query by id
 
         s = s.right(s.size()-1);
         if (s.match(/^[A-Za-z][A-Za-z0-9-_:\.]*$/)) {
-            return [parent.getElementById(s.toString())];
+            return [document.getElementById(s.toString())];
         } else {
             throw "Invalid id of html element.";
         }
@@ -45,14 +91,41 @@ erej.singleParse = function (selector, parent) {
 
         s = s.right(s.size()-1);
         if (s.match(/^[A-Za-z][A-Za-z0-9-_]*$/)) {
-            return [];
+            var res = [];
+
+            if (parent==document)
+                parent = document.body;
+
+            function filter_class(elem) {
+                if (elem.className) {
+                    var arr = erej.s(elem.className).splits();
+                    if (erej.a(arr).contain(s.toString()))
+                        res.push(elem);
+                }
+            }
+
+            if (erej.isArray(parent)) {
+                erej.each(parent, filter_class);
+            } else {
+                walkNodes(parent, filter_class);
+            }
+
+            return res;
         } else {
             throw "Invalid class name of html element.";
         }
     } else if (s.match(/^[A-Za-z][A-Za-z0-9]*$/)) {
         // query by tagname
 
-        return [parent.getElementsByTagName(s.toString())];
+        if (erej.isArray(parent)) {
+            var res = erej.a();
+            erej.each(parent, function(elem) {
+                var arr = elem.getElementsByTagName(s.toString());
+                res.merge(arr);
+            });
+            return res.toArray();
+        }
+        return erej.toArray(parent.getElementsByTagName(s.toString()));
     } else if (s.startWith('[') && s.endWith(']')) {
         // query by attribute
 
@@ -65,10 +138,17 @@ erej.singleParse = function (selector, parent) {
 
             if (parent==document)
                 parent = document.body;
-            erej.each(parent.childNodes, function (elem) {
-                if (elem.nodeType==1 && ('getAttribute' in elem) && elem.getAttribute(k)==v)
+
+            function filter_attr(elem) {
+                if(('getAttribute' in elem) && elem.getAttribute(k)==v)
                     res.push(elem);
-            });
+            }
+
+            if (erej.isArray(parent)) {
+                erej.each(parent, filter_attr);
+            } else {
+                walkNodes(parent, filter_attr);
+            }
 
             return res;
         } else {
@@ -91,15 +171,30 @@ erej.select = function (selector, parent) {
             d.innerHTML = selector;
             return d.childNodes;
         }  else {
-            return erej.singleParse(selector, parent);
+            var reg = [];
+            reg.push('(#[A-Za-z][A-Za-z0-9-_:\\.]*)'); // id
+            reg.push('([A-Za-z][A-Za-z0-9]*)'); // tagnaem
+            reg.push('(\\.[A-Za-z][A-Za-z0-9-_]*)'); // class
+            reg.push('(\\[(([A-Za-z][A-Za-z0-9]*?)(?=).*?"(.+?)")\\])'); // attr
+            var regexp = new RegExp(reg.join('|'), 'g');
+
+            var m = selector.match(regexp);
+            if (m) {
+                //console.log(m);
+
+                var res = parent;
+                erej.each(m, function (sel) {
+                    res = erej.singleParse(sel, res);
+                });
+
+                return res;
+            }
+
+            //return erej.singleParse(selector, parent);
 
             if (parent.querySelectorAll) {
                 return parent.querySelectorAll(selector);
             } else {
-                /*var res = [];
-                erej.each(selector.split(' '), function (elem) {
-                    res = erej.singleParse(elem, res.length>0 ? res[0] : parent);
-                });*/
                 return erej.singleParse(selector, parent);
             }
         }
@@ -257,11 +352,12 @@ erej.fn = {
     },
 
     toArray : function() {
-        var res = [];
+        /*var res = [];
         erej.each(this, function (elem) {
             res.push(elem);
         });
-        return res;
+        return res;*/
+        return erej.toArray(this);
     },
 
     find : function (selector) {
@@ -289,6 +385,12 @@ erej.isArray = function (obj) {
     return obj instanceof Array;
 };
 
+erej.isLikeArray = function (obj) {
+    if (!erej.isObject(obj))
+        return false;
+    return erej.isDefined(obj.length);
+};
+
 erej.isRegexp = function (obj) {
     if (!erej.isObject(obj))
         return false;
@@ -314,6 +416,7 @@ erej.isErej = function(obj) {
 erej.isHtmlElement = function(obj) {
     if (!erej.isObject(obj))
         return false;
+    // element:1 document:9
     return obj.nodeType==1 || obj.nodeType == 9;
 };
 
@@ -322,12 +425,14 @@ erej.isDefined = function(obj) {
 };
 
 // 遍历数组或对象，callback返回true，中断循环
-erej.each = function (arr, callback) {
+erej.each = function (arr, callback, asArray) {
     if (!erej.isObject(arr))
         return;
     if (!erej.isFunction(callback))
         return;
-    if (erej.isArray(arr) || arr instanceof erej.init || arr instanceof erej.a.init) {
+    if (erej.isArray(arr) || arr instanceof erej.init ||
+        arr instanceof erej.a.init || (asArray && erej.isDefined(arr.length)))
+    {
         for (var i = 0; i < arr.length; i++)
             if (callback.call(arr[i], arr[i], i))
                 break;
@@ -336,6 +441,18 @@ erej.each = function (arr, callback) {
             if (callback.call(arr[k], arr[k], k))
                 break;
         }
+    }
+};
+
+erej.toArray = function (obj) {
+    if (Array.prototype.slice)
+        return Array.prototype.slice.call(obj);
+    else {
+        var res = [];
+        erej.each(obj, function (elem) {
+            res.push(elem);
+        }, true);
+        return res;
     }
 };
 
@@ -368,6 +485,7 @@ erej.ready = function (callback) {
     }
 
     if ('addEventListener' in document) {
+        // >= ie9
         $(document).on('DOMContentLoaded', onDomLoad);
         return;
     } else if ('attachEvent' in document) {
@@ -380,7 +498,8 @@ erej.ready = function (callback) {
             }
         });
 
-        if (document.documentElement.doScroll && !erej.isDefined(window.frameElement)) {
+        if (document.documentElement.doScroll && erej.isDefined(window.frameElement)) {
+            // <= ie8
             console.log("doscroll....");
 
             (function () {
@@ -427,17 +546,6 @@ erej.a.init = function (arr) {
 };
 
 erej.a.init.prototype = {
-    contain : function (val) {
-        var res = false;
-        erej.each(this, function (elem) {
-            if (elem == val) {
-                res = true;
-                return true;
-            }
-        });
-        return res;
-    },
-
     unique : function() {
         var res = [];
         var l = this.length;
@@ -460,6 +568,39 @@ erej.a.init.prototype = {
         return Array.prototype.sort.call(this, function(){
             return ((Math.random() * 3) | 0) - 1;
         });
+    },
+
+    merge : function (arr) {
+        if (!erej.isLikeArray(arr))
+            return this;
+
+        var _self = this;
+        erej.each(arr, function (elem) {
+            _self[_self.length++] = elem;
+        }, true);
+        return this;
+    },
+
+    push : function (elem) {
+        this[this.length++] = elem;
+        return this;
+    },
+
+    /* -----以下方法不可续接----- */
+
+    toArray : function() {
+        return erej.toArray(this);
+    },
+
+    contain : function (val) {
+        var res = false;
+        erej.each(this, function (elem) {
+            if (elem == val) {
+                res = true;
+                return true;
+            }
+        });
+        return res;
     }
 };
 
@@ -517,6 +658,10 @@ erej.s.init.prototype = {
 
     split : function (str) {
         return this.str.split(str);
+    },
+
+    splits : function () {
+        return this.trim().str.split(/\s+/);
     },
 
     // 编码URI数据=PHP:rawurlencode
