@@ -383,6 +383,31 @@ erej.fn = {
     	}
     },
     
+    class : function(k, override) {
+    	if (this.length == 0)
+    		return this;
+    	
+    	if (!erej.isDefined(k)) {
+    		return erej.s(this[0].className).splits();
+    	} else {
+    		var _self = this;
+    		
+    		if (erej.isString(k)) {
+    			if (override) {
+    				this[0].className = k;
+    			} else {
+    				var c = _self.class();
+        			var keys = erej.s(k).splits();
+        			erej.each(keys, function(key) {
+       					c.push(key);
+        			});
+        			this[0].className = erej.a(c).unique().toArray().join(' ');
+    			}
+    		}
+    		return this;
+    	}
+    },
+    
     css : function(k, v) {
     	if (this.length == 0)
     		return this;
@@ -415,7 +440,10 @@ erej.fn = {
     		if (erej.isObject(obj)) {
     			var old = _self.csss();
     			erej.each(obj, function(val, key) {
-    				old[key] = val;
+    				if (val===false)
+    					delete old[key];
+    				else
+    					old[key] = val;
     			});
     			
     			var res = [];
@@ -748,10 +776,12 @@ erej.a.init.prototype = {
             res.push(this[i]);
         }
 
+        var _self = this;
         erej.each(res, function (elem, i) {
-            this[i] = res[i];
+            _self[i] = res[i];
         });
-        this.length = res.length;
+        _self.length = res.length;
+        
         return this;
     },
 
@@ -776,22 +806,36 @@ erej.a.init.prototype = {
         this[this.length++] = elem;
         return this;
     },
+    
+    remove : function (idx) {
+    	if (idx>=0 && idx < this.length) {
+    		for (var i=idx; i<this.length; i++)
+    			this[i] = this[i+1];
+    		delete this[this.length];
+    		this.length--;
+    	}
+    	return this;
+    },
 
     /* -----以下方法不可续接----- */
 
-    toArray : function() {
+    toArray : function () {
         return erej.toArray(this);
     },
-
-    contain : function (val) {
-        var res = false;
-        erej.each(this, function (elem) {
+    
+    indexOf : function (val) {
+    	var res = -1;
+        erej.each(this, function (elem, i) {
             if (elem == val) {
-                res = true;
+                res = i;
                 return true;
             }
         });
         return res;
+    },
+
+    contain : function (val) {
+        return this.indexOf(val)!=-1;
     }
 };
 
@@ -805,7 +849,7 @@ erej.s = function (str) {
 };
 
 erej.s.init = function(str) {
-    this.str = str || "";
+    this.str = erej.isString(str) ? str : "";
 };
 
 erej.s.init.prototype = {
