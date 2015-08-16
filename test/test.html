@@ -1,80 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-COMPATIBLE" content="IE=edge">
-    <title></title>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-COMPATIBLE" content="IE=edge">
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1" />
+<title>测试</title>
+<style type="text/css">
+.logbox {
+	background-color: #000;
+	color: #fff;
+	position: absolute;
+	position: fixed;
+	top: 0;
+	right: 0;
+	width: 50%;
+	bottom: 0;
+	overflow-y: auto;
+	border: none;
+}
+.leftbox {
+	width: 48%;
+}
+div {
+	border: 1px solid #2788DA;
+	padding: 2px;
+}
+</style>
 
-    <script>
-        var oldlog = function(){};
-        function mylog(str) {
-            if (document.getElementById('log2'))
-                document.getElementById('log2').innerHTML = document.getElementById('log2').innerHTML+"<br>"+str;
-
-            if (typeof oldlog == "function")
-                oldlog.apply(console, arguments);
-            else
-                oldlog(str);
-        }
-        if (typeof console == "undefined")
-            console = {};
-        if (console.log)
-            oldlog = console.log;
-        console.log = mylog;
-    </script>
-    <script src="../src/erej.js"></script>
+<script>
+	var oldlog = function() {
+	};
+	function mylog(str) {
+		if (document.getElementById('log2')) {
+			var a = document.getElementById('log2');
+			a.innerHTML = a.innerHTML + "<br>" + str;
+			a.scrollTop = a.scrollHeight;
+		}
+		if (typeof oldlog == "function")
+			oldlog.apply(console, arguments);
+		else
+			oldlog(str);
+	}
+	if (typeof console == "undefined")
+		console = {};
+	if (console.log)
+		oldlog = console.log;
+	console.log = mylog;
+</script>
+<script src="../src/erej.js"></script>
 
 </head>
 <body>
-<div id="main1" action="ok" name="12">1111111</div>
-<div id="main2" name="13" action="test_123" class="b1">2222222</div>
-<div id="main3" class="a1">3333333</div>
+	<div class="leftbox">
+		<div id="main1" action="ok" name="12" style="color:red;font-size:20px;">1111111</div>
+		<div id="main2" name="13" action="test_123" class="b1">
+			<input type="text" value="123" />
+			<input type="radio" name="ra1" value="v1"/>
+			<input type="radio" name="ra1" value="v2"/>
+			<textarea>ko</textarea>
+			
+		</div>
+		<div id="main3" class="a1" data-name="name3" data-id="id33" data-age="age333">3333333</div>
+	
+		<div id="main4">
+			44444
+			<div id="main5" action="ok" class="a1 b1">
+				55555
+				<div id="main6">
+					666666
+					<div id="main7">777777</div>
+				</div>
+			</div>
+		</div>
+	
+		<div id="log"></div>
+	</div>
+	<div id="log2" class="logbox"></div>
+	<script>
+		function log(str) {
+			$('#log').html($('#log').html() + "<br>" + str);
+		}
+		var f1 = function(e, data) {
+			log('click1 cur:' + this.id + " src:" + e.srcElement.id + " data:"
+					+ data);
+		};
+		var f2 = function(e, data) {
+			log('click2 cur:' + this.id + " src:" + e.srcElement.id + " data:"
+					+ data + " proxy:" + (e.proxyElement?e.proxyElement.id:"no"));
+		};
 
-<div id="main4">44444
-    <div id="main5" action="ok" class="a1 b1">55555
-        <div id="main6">666666
-            <div id="main7">777777</div>
-        </div>
-    </div>
-</div>
+		window.onload = function() {
+			log("onload");
 
-<div id="log"></div>
-<div id="log2" style="background-color: #000; color: #fff;"></div>
-<script>
-    function log(str) {
-        $('#log').html($('#log').html()+"<br>"+str);
-    }
-    var f1 = function (e, data) {
-        log('click1 cur:'+ this.id+" src:"+ e.srcElement.id+" data:"+data);
-    };
-    var f2 = function (e, data) {
-        log('click2 cur:'+ this.id+" src:"+ e.srcElement.id+" data:"+data+" proxy:"+ e.proxyElement.id);
-    };
+		}
+		
+		function showSysInfo() {
+			console.log('===============');
+			console.log("【userAgent】:" + window.navigator.userAgent);
+			console.log("【appName】:" + window.navigator.appName);
+			//console.log("【appVersion】:" + window.navigator.appVersion);
+			//console.log("【appCodeName】:" + window.navigator.appCodeName);
+			console.log("【kernel】:" + erej.browser.kernel() + " @"	+ erej.browser.ver());
+			console.log("【os】:" + erej.browser.os() + " @"	+ erej.browser.osVer());
+			console.log("【isIE】:" + erej.browser.isIE());
+			console.log("【isMobile】:"+ erej.browser.isMobile());
+			console.log('===============');
+			
+		}
 
-    window.onload = function () {
-        log("onload");
-        //var t = $('div');
-        //t.html('yes123456');
+		erej.ready(function() {
+			log("dom ready.");
 
-        $('#main4').on('click', f1, null, "data1");
-        $('#main4').on('click', f2, '[action="ok"]', "data2");
-        //alert(t.html());
+			//var t = $('div');
+			//t.html('yes123456');
 
-        //alert("123".startWith('1'));
+			$('#main4').on('click', f1, null, "data1");
+			$('#main4').on('click', f2, '[action="ok"]', "data2");
+			//alert(t.html());
 
-        console.log('===============');
-        console.log("userAgent:"+window.navigator.userAgent);
-        console.log("appName:"+window.navigator.appName);
-        console.log("appVersion:"+window.navigator.appVersion);
-        console.log("appCodeName:"+window.navigator.appCodeName);
-        console.log("kernel:"+erej.browser.kernel()+" ver:"+erej.browser.ver());
-        console.log('===============');
-    }
-
-    erej.ready(function () {
-        log("dom ready.");
-    });
-</script>
-<iframe src="http://www.taobao.com" width="400" height="400"></iframe>
+			//alert("123".startWith('1'));
+			showSysInfo();
+			
+		});
+		
+		$(window).on('resize', function(e) {
+			$('#log2').html('');
+			erej.browser.agent = navigator.userAgent.toLowerCase();
+			showSysInfo();
+		});
+	</script>
+	<iframe src="http://open.taobao.com/index.htm" width="400" height="400"></iframe>
 </body>
 </html>

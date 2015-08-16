@@ -14,37 +14,76 @@ var erej = function(selector, parent){
 
 erej.fn = erej.prototype;
 
-//var userAgent = navigator.userAgent.toLowerCase();
 erej.browser = {
     agent: navigator.userAgent.toLowerCase(),
     isIE: function () {
-        return (this.kernel()=='IE');
+        return (!!window.ActiveXObject || "ActiveXObject" in window);
+    },
+    isMobile: function () {
+        return (/\bmobile\b/.test(this.agent));
     },
     ver: function () {
         var k = this.kernel();
         switch (k) {
-            case 'IE':
-                return (/msie\s([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
-                break;
+            case 'IE': {
+            	if (/msie\s([^\s|;]+)/ig.test(this.agent))
+            		return RegExp.$1;
+            	else if (/trident.*rv:([^\)]+)/ig.test(this.agent))
+                    return RegExp.$1;
+                return 0;
+            }
             case 'Chrome':
                 return (/chrome\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
-                break;
             case 'Firefox':
                 return (/firefox\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
-                break;
+            case 'Safari':
+            case 'Opera':
+            	return (/version\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
         }
         return 0;
     },
     kernel: function() {
-        if (this.agent.indexOf('msie')!=-1)
+        if (this.agent.indexOf('msie')!=-1 || "ActiveXObject" in window)
             return 'IE';
         else if (this.agent.indexOf('chrome/')!=-1)
             return 'Chrome'
         else if (this.agent.indexOf('firefox/')!=-1)
             return 'Firefox'
+        else if (this.agent.indexOf('safari/')!=-1 && this.agent.indexOf('version/')!=-1)
+            return 'Safari';
+        else if (this.agent.indexOf('opera/')!=-1 && this.agent.indexOf('version/')!=-1)
+            return 'Opera';
         return 'unknown';
+    },
+    os: function() {
+        if (this.agent.indexOf('windows nt')!=-1)
+            return 'Windows';
+        else if (/android[\s|\/]/.test(this.agent))
+            return 'Android'
+        else if (this.agent.indexOf('mac os')!=-1)
+            return 'IOS'
+        else if (this.agent.indexOf('windows phone')!=-1)
+            return 'WP'
+        else if (this.agent.indexOf('symbianos')!=-1)
+            return 'Symbian'
+        return 'unknown';
+    },
+    osVer: function () {
+        var k = this.os();
+        switch (k) {
+            case 'Windows':
+                return (/windows nt\s([^;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
+            case 'Android':
+                return (/android[\/|\s]([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
+            case 'IOS':
+                return (/os\s+([^\s]+)\s+like/ig.test(this.agent) ? RegExp.$1 : 0);
+            case 'WP':
+                return (/windows phone\s([^;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
+            case 'Symbian':
+                return (/symbianos\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
+        }
+        return 0;
     }
-    
 
 };
 
@@ -104,7 +143,7 @@ erej.singleParse = function (selector, parent) {
                 }
             }
 
-            if (erej.isArray(parent)) {
+            if (erej.isArray(parent) || erej.isErej(parent)) {
                 erej.each(parent, filter_class);
             } else {
                 walkNodes(parent, filter_class);
@@ -117,7 +156,7 @@ erej.singleParse = function (selector, parent) {
     } else if (s.match(/^[A-Za-z][A-Za-z0-9]*$/)) {
         // query by tagname
 
-        if (erej.isArray(parent)) {
+        if (erej.isArray(parent) || erej.isErej(parent)) {
             var res = erej.a();
             erej.each(parent, function(elem) {
                 var arr = elem.getElementsByTagName(s.toString());
@@ -144,7 +183,7 @@ erej.singleParse = function (selector, parent) {
                     res.push(elem);
             }
 
-            if (erej.isArray(parent)) {
+            if (erej.isArray(parent) || erej.isErej(parent)) {
                 erej.each(parent, filter_attr);
             } else {
                 walkNodes(parent, filter_attr);
@@ -171,31 +210,28 @@ erej.select = function (selector, parent) {
             d.innerHTML = selector;
             return d.childNodes;
         }  else {
-            var reg = [];
-            reg.push('(#[A-Za-z][A-Za-z0-9-_:\\.]*)'); // id
-            reg.push('([A-Za-z][A-Za-z0-9]*)'); // tagnaem
-            reg.push('(\\.[A-Za-z][A-Za-z0-9-_]*)'); // class
-            reg.push('(\\[(([A-Za-z][A-Za-z0-9]*?)(?=).*?"(.+?)")\\])'); // attr
-            var regexp = new RegExp(reg.join('|'), 'g');
-
-            var m = selector.match(regexp);
-            if (m) {
-                //console.log(m);
-
-                var res = parent;
-                erej.each(m, function (sel) {
-                    res = erej.singleParse(sel, res);
-                });
-
-                return res;
-            }
-
-            //return erej.singleParse(selector, parent);
-
-            if (parent.querySelectorAll) {
+            
+            if (parent.querySelectorAll && 0) {
                 return parent.querySelectorAll(selector);
             } else {
-                return erej.singleParse(selector, parent);
+            	var reg = [];
+                reg.push('(#[A-Za-z][A-Za-z0-9-_:\\.]*)'); // id
+                reg.push('([A-Za-z][A-Za-z0-9]*)'); // tagnaem
+                reg.push('(\\.[A-Za-z][A-Za-z0-9-_]*)'); // class
+                reg.push('(\\[(([A-Za-z][A-Za-z0-9]*?)(?=).*?"(.+?)")\\])'); // attr
+                var regexp = new RegExp(reg.join('|'), 'g');
+
+                var m = selector.match(regexp);
+                if (m) {
+                    //console.log(m);
+
+                    var res = parent;
+                    erej.each(m, function (sel) {
+                        res = erej.singleParse(sel, res);
+                    });
+
+                    return res;
+                }
             }
         }
     } else if (erej.isObject(selector)) {
@@ -226,7 +262,7 @@ erej.event = {
         if (!event.srcElement && event.target)
             event.srcElement = event.target;
 
-        event.proxyElement = handle.elem;
+        event.proxyElement = null;//handle.elem;
         if (handle.deleage) {
             var c = erej(handle.deleage, handle.elem);
             if (c.length > 0) {
@@ -301,15 +337,176 @@ erej.event = {
 },
 
 erej.fn = {
+    
+    attr : function(k, v) {
+    	if (this.length == 0)
+    		return this;
+    	
+    	if (!erej.isDefined(k)) {
+    		return this.attrs();
+    	} else {
+    		if (erej.isDefined(v)) {
+    			if (v===false)
+            		this[0].removeAttribute(k);
+            	else
+            		this[0].setAttribute(k, v);
+
+                return this;
+            } else {
+                return this[0].getAttribute(k);
+            }
+    	}
+    },
+    
+    attrs : function(obj) {
+    	if (this.length == 0)
+    		return this;
+    	
+    	if (erej.isDefined(obj)) {
+    		var _self = this;
+    		// obj is k-v object
+    		if (erej.isObject(obj)) {
+    			erej.each(obj, function(val, key) {
+    				_self.attr(key, val);
+    			});
+    		}
+    		return this;
+    	} else {
+    		var res = {};
+    		erej.each(this[0].attributes, function(elem) {
+    			// attribute's nodeType==2
+    			if (erej.isObject(elem) && elem.nodeType==2) {
+    				res[elem.name] = elem.value;
+    			}
+    		});
+    		return res;
+    	}
+    },
+    
+    css : function(k, v) {
+    	if (this.length == 0)
+    		return this;
+    	
+    	if (!erej.isDefined(k)) {
+    		return this.csss();
+    	} else {
+    		if (erej.isString(k)) {
+    			if (k=="") {
+    				this[0].style.cssText = "";
+    				return this;
+    			} else {
+    				var obj = {};
+	    			obj[k] = v;
+	    			return this.csss(obj);
+    			}
+    		} else {
+    			return this.csss(k);
+    		}
+    	}
+    },
+    
+    csss : function(obj) {
+    	if (this.length == 0)
+    		return this;
+    	
+    	if (erej.isDefined(obj)) {
+    		var _self = this;
+    		// obj is k-v object
+    		if (erej.isObject(obj)) {
+    			var old = _self.csss();
+    			erej.each(obj, function(val, key) {
+    				old[key] = val;
+    			});
+    			
+    			var res = [];
+    			erej.each(old, function(val, key) {
+    				res.push(key+":"+val+";");
+    			});
+    			this[0].style.cssText = res.join(' ');
+    		}
+    		return this;
+    	} else {
+    		var s = this[0].style.cssText.split(/\s*;\s*/);
+    		var res = {};
+    		erej.each(s, function(elem) {
+    			var a = elem.split(/\s*:\s*/);
+    			if (a.length == 2) {
+    				res[a[0]] = a[1];
+    			}
+    		});
+    		return res;
+    	}
+    },
+    
+    data : function(k, v) {
+    	if (this.length == 0)
+    		return this;
+    	
+    	if (!erej.isDefined(k)) {
+    		return this.datas();
+    	} else {
+    		if (erej.isString(k)) {
+    			return this.attr("data-"+k, v);
+    		} else {
+    			return this.datas(k);
+    		}
+    	}
+    },
+    
+    datas : function(obj) {
+    	if (this.length == 0)
+    		return this;
+    	
+    	if (erej.isDefined(obj)) {
+    		var _self = this;
+    		// obj is k-v object
+    		if (erej.isObject(obj)) {
+    			erej.each(obj, function(val, key) {
+    				_self.attr('data-'+key, val);
+    			});
+    		}
+    		return this;
+    	} else {
+    		var res = {};
+    		erej.each(this.attrs(), function(val, key) {
+    			key = erej.s(key);
+				if (key.startWith('data-'))
+					res[key.right(key.size()-5)] = val;
+    		});
+    		return res;
+    	}
+    },
+    
     each : function(callback) {
         erej.each(this, callback);
         return this;
     },
-
+    
+    find : function (selector) {
+        if (this.length==0)
+            return this;
+        return erej(selector, this);
+    },
+    
     get : function (idx) {
         return this[idx];
     },
-
+    
+    html : function(v) {
+        if (erej.isDefined(v)) {
+        	if (this.length>0)
+            	this[0].innerHTML = v;
+            
+            return this;
+        } else {
+            if (this.length == 0) {
+                return '';
+            } else {
+                return this[0].innerHTML;
+            }
+        }
+    },
+    
     // type, callback, [delegate,] [data]
     on : function (type, callback, delegate, data) {
         if (!erej.isString(type))
@@ -334,36 +531,31 @@ erej.fn = {
 
         return this;
     },
-
-    html : function(v) {
+    
+    tag : function() {
+    	if (this.length == 0)
+    		return this;
+    	
+    	return this[0].tagName.toLowerCase();
+    },
+    
+    toArray : function() {
+        return erej.toArray(this);
+    },
+    
+    val : function(v) {
         if (erej.isDefined(v)) {
-            this.each(function(elem, i) {
-               elem.innerHTML = v;
-            });
+        	if (this.length>0)
+        		this[0].value = v;
 
             return this;
         } else {
             if (this.length == 0) {
                 return '';
             } else {
-                return this[0].innerHTML;
+                return this[0].value;
             }
         }
-    },
-
-    toArray : function() {
-        /*var res = [];
-        erej.each(this, function (elem) {
-            res.push(elem);
-        });
-        return res;*/
-        return erej.toArray(this);
-    },
-
-    find : function (selector) {
-        if (this.length==0)
-            return this;
-        return erej(selector, this[0]);
     }
 };
 
@@ -372,7 +564,8 @@ erej.type = function (obj) {
 };
 
 erej.isObject = function (obj) {
-    return erej.type(obj)=="object";
+	// safari regard NodeList as function
+    return erej.type(obj)=="object" || erej.isNodeList(obj);
 };
 
 erej.isString = function (obj) {
@@ -392,14 +585,10 @@ erej.isLikeArray = function (obj) {
 };
 
 erej.isRegexp = function (obj) {
-    if (!erej.isObject(obj))
-        return false;
     return obj instanceof RegExp;
 };
 
 erej.isNodeList = function (obj) {
-    if (!erej.isObject(obj))
-        return false;
     return obj instanceof NodeList;
 };
 
@@ -408,9 +597,11 @@ erej.isFunction = function(obj) {
 };
 
 erej.isErej = function(obj) {
-    if (!erej.isObject(obj))
-        return false;
     return obj instanceof erej.init;
+};
+
+erej.isErejArray = function(obj) {
+    return obj instanceof erej.a.init;
 };
 
 erej.isHtmlElement = function(obj) {
@@ -430,8 +621,8 @@ erej.each = function (arr, callback, asArray) {
         return;
     if (!erej.isFunction(callback))
         return;
-    if (erej.isArray(arr) || arr instanceof erej.init ||
-        arr instanceof erej.a.init || (asArray && erej.isDefined(arr.length)))
+    if (erej.isArray(arr) || erej.isErej(arr) || erej.isErejArray(arr)
+    	|| (asArray && erej.isDefined(arr.length)))
     {
         for (var i = 0; i < arr.length; i++)
             if (callback.call(arr[i], arr[i], i))
