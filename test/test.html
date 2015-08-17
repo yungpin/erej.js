@@ -25,6 +25,15 @@ div {
 	border: 1px solid #2788DA;
 	padding: 2px;
 }
+    .cc1 {
+        color: red;
+    }
+    .cc2 {
+        color: blue;
+    }
+    .cc3 {
+        color: yellow;
+    }
 </style>
 
 <script>
@@ -60,7 +69,7 @@ div {
 			<textarea>ko</textarea>
 			
 		</div>
-		<div id="main3" class="a1" data-name="name3" data-id="id33" data-age="age333">3333333</div>
+		<div id="main3" class="a1" data-name="name3" data-id="id33" data-age="age333" class="cc1">3333333</div>
 	
 		<div id="main4">
 			44444
@@ -83,6 +92,16 @@ div {
 		var f1 = function(e, data) {
 			log('click1 cur:' + this.id + " src:" + e.srcElement.id + " data:"
 					+ data);
+
+            //e.preventBubble();
+            //e.cancelBubble = true;
+
+            if (e.stopPropagation)
+                e.stopPropagation();
+            else {
+                e.cancelBubble = true;
+                console.log("event not support stopPropagation");
+            }
 		};
 		var f2 = function(e, data) {
 			log('click2 cur:' + this.id + " src:" + e.srcElement.id + " data:"
@@ -114,21 +133,31 @@ div {
 			//var t = $('div');
 			//t.html('yes123456');
 
-			$('#main4').on('click', f1, null, "data1");
-			$('#main4').on('click', f2, '[action="ok"]', "data2");
+			$('#main5').on('click', f1, null, "data5555555");
+			$('#main4').on('click', f2, '[action="ok"]', "data4444444");
 			//alert(t.html());
 
 			//alert("123".startWith('1'));
 			showSysInfo();
-			
+
+            $('#main3').classname('cc1 cc2 cc3').classname('cc3 cc2');
+
+            $('#main4').css({
+                'font-size':'18px',
+                'color':'red'
+            });
+
+            console.log($('#main4').css());
 		});
 		
 		$(window).on('resize', function(e) {
-			$('#log2').html('');
-			erej.browser.agent = navigator.userAgent.toLowerCase();
-			showSysInfo();
+            //if (!erej.browser.isIE()) {
+                //$('#log2').html('');
+                erej.browser.agent = navigator.userAgent.toLowerCase();
+                //showSysInfo();
+            //}
 		});
 	</script>
-	<iframe src="http://open.taobao.com/index.htm" width="400" height="400"></iframe>
+	<iframe src="http://git.oschina.net/progit/" width="400" height="400"></iframe>
 </body>
 </html>

@@ -7,6 +7,7 @@ var erej_isBind = false;
 var erej_isReady = false;
 var erej_readyList = [];
 var erej_eventList = {};
+var erej_guid = 1;
 
 var erej = function(selector, parent){
     return new erej.init(selector, parent);
@@ -16,32 +17,15 @@ erej.fn = erej.prototype;
 
 erej.browser = {
     agent: navigator.userAgent.toLowerCase(),
+
     isIE: function () {
         return (!!window.ActiveXObject || "ActiveXObject" in window);
     },
+
     isMobile: function () {
         return (/\bmobile\b/.test(this.agent));
     },
-    ver: function () {
-        var k = this.kernel();
-        switch (k) {
-            case 'IE': {
-            	if (/msie\s([^\s|;]+)/ig.test(this.agent))
-            		return RegExp.$1;
-            	else if (/trident.*rv:([^\)]+)/ig.test(this.agent))
-                    return RegExp.$1;
-                return 0;
-            }
-            case 'Chrome':
-                return (/chrome\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
-            case 'Firefox':
-                return (/firefox\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
-            case 'Safari':
-            case 'Opera':
-            	return (/version\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
-        }
-        return 0;
-    },
+
     kernel: function() {
         if (this.agent.indexOf('msie')!=-1 || "ActiveXObject" in window)
             return 'IE';
@@ -55,6 +39,7 @@ erej.browser = {
             return 'Opera';
         return 'unknown';
     },
+
     os: function() {
         if (this.agent.indexOf('windows nt')!=-1)
             return 'Windows';
@@ -68,6 +53,7 @@ erej.browser = {
             return 'Symbian'
         return 'unknown';
     },
+
     osVer: function () {
         var k = this.os();
         switch (k) {
@@ -75,16 +61,41 @@ erej.browser = {
                 return (/windows nt\s([^;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
             case 'Android':
                 return (/android[\/|\s]([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
-            case 'IOS':
-                return (/os\s+([^\s]+)\s+like/ig.test(this.agent) ? RegExp.$1 : 0);
+            case 'IOS': {
+                if (/os\s+([^\s]+)\s+like/ig.test(this.agent))
+                    return RegExp.$1;
+                if (/mac\s+os\s+x\s+([^\s|\)]+)/ig.test(this.agent))
+                    return RegExp.$1;
+                return 0;
+            }
             case 'WP':
                 return (/windows phone\s([^;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
             case 'Symbian':
                 return (/symbianos\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
         }
         return 0;
-    }
+    },
 
+    ver: function () {
+        var k = this.kernel();
+        switch (k) {
+            case 'IE': {
+                if (/msie\s([^\s|;]+)/ig.test(this.agent))
+                    return RegExp.$1;
+                else if (/trident.*rv:([^\)]+)/ig.test(this.agent))
+                    return RegExp.$1;
+                return 0;
+            }
+            case 'Chrome':
+                return (/chrome\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
+            case 'Firefox':
+                return (/firefox\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
+            case 'Safari':
+            case 'Opera':
+                return (/version\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
+        }
+        return 0;
+    }
 };
 
 erej.init = function(selector, parent) {
@@ -99,7 +110,7 @@ erej.init = function(selector, parent) {
         _self.length = doms.length;
     }
 
-    return erej.z(_self, erej.fn);
+    return erej.pack(_self, erej.fn);
 };
 
 // 始终返回数组
@@ -160,7 +171,7 @@ erej.singleParse = function (selector, parent) {
             var res = erej.a();
             erej.each(parent, function(elem) {
                 var arr = elem.getElementsByTagName(s.toString());
-                res.merge(arr);
+                res.merge(erej.toArray(arr));
             });
             return res.toArray();
         }
@@ -205,7 +216,7 @@ erej.select = function (selector, parent) {
         parent = document;
 
     if (erej.isString(selector)) {
-        if (erej.s(selector).contains(['<', '>'])) {
+        if (erej.s(selector).contain(['<', '>'])) {
             var d = document.createElement('div');
             d.innerHTML = selector;
             return d.childNodes;
@@ -243,7 +254,7 @@ erej.select = function (selector, parent) {
     return [];
 };
 
-erej.z = function (obj, fn) {
+erej.pack = function (obj, fn) {
     if (erej.isObject(obj.__proto__)) {
         var res = Array.prototype.slice.call(obj);
         res.__proto__ = fn;
@@ -253,9 +264,49 @@ erej.z = function (obj, fn) {
     }
 };
 
-erej.guid = 1;
-
 erej.event = {
+
+    fire : function (elem, type) {
+        var _self = this;
+        var stopBuble = false;
+        var srcElement = elem;
+
+        while (elem && stopBuble==false) {
+            var guid = erej.event.getGuid(elem);
+
+            if (guid && erej_eventList[guid]) {
+                erej.each(erej_eventList[guid], function (handle, i) {
+                    if (handle.type == type) {
+                        var event = {
+                            'srcElement': srcElement,
+                            'type': handle.type,
+                            'preventDefault': function () {},
+                            'returnValue': true, // for IE
+                            'stopPropagation': function () {
+                                stopBuble = true;
+                            },
+                            'cancelBubble': false // for IE
+                        };
+                        _self.handle(event, handle);
+
+                        if (event.cancelBubble)
+                            stopBuble = event.cancelBubble;
+                    }
+                });
+            }
+
+            elem = elem.parentNode;
+        }
+    },
+
+    guid : function (elem) {
+        return elem._eid || (elem._eid = erej_guid++);
+    },
+
+    getGuid : function (elem) {
+        return elem._eid;
+    },
+
     handle : function(event, handle) {
         console.log('handle guid:'+handle.guid+" type:"+handle.type);
 
@@ -272,6 +323,27 @@ erej.event = {
         }
 
         handle.callback.call(handle.elem, event, handle.data);
+    },
+
+    off : function (elem, type, callback) {
+        var _self = this;
+        var guid = erej.event.getGuid(elem);
+        if (guid && erej_eventList[guid]) {
+            erej.each(erej_eventList[guid], function (handle, i) {
+                if (handle.type == type && handle.callback == callback) {
+                    if ('removeEventListener' in handle.elem)
+                        handle.elem.removeEventListener(handle.type, handle.callbackFn, handle.capture);
+                    else if ('detachEvent' in handle.elem)
+                        handle.elem.detachEvent('on'+handle.type, handle.callbackFn, handle.capture);
+                    else
+                        elem['on'+type] = null;
+
+                    erej_eventList[guid].splice(i, 1);
+
+                    return true;
+                }
+            });
+        }
     },
 
     on : function (elem, type, callback, delegate, data, capture) {
@@ -304,35 +376,6 @@ erej.event = {
             elem.attachEvent('on'+type, handle.callbackFn, capture);
         else
             elem['on'+type] = handle.callbackFn;
-    },
-
-    off : function (elem, type, callback) {
-        var _self = this;
-        var guid = erej.event.getGuid(elem);
-        if (guid && erej_eventList[guid]) {
-            erej.each(erej_eventList[guid], function (handle, i) {
-                if (handle.type == type && handle.callback == callback) {
-                    if ('removeEventListener' in handle.elem)
-                        handle.elem.removeEventListener(handle.type, handle.callbackFn, handle.capture);
-                    else if ('detachEvent' in handle.elem)
-                        handle.elem.detachEvent('on'+handle.type, handle.callbackFn, handle.capture);
-                    else
-                        elem['on'+type] = null;
-
-                    erej_eventList[guid].splice(i, 1);
-
-                    return true;
-                }
-            });
-        }
-    },
-
-    guid : function (elem) {
-        return elem._eid || (elem._eid = erej.guid++);
-    },
-
-    getGuid : function (elem) {
-        return elem._eid;
     }
 },
 
@@ -383,7 +426,7 @@ erej.fn = {
     	}
     },
     
-    class : function(k, override) {
+    classname : function(k, override) {
     	if (this.length == 0)
     		return this;
     	
@@ -396,7 +439,7 @@ erej.fn = {
     			if (override) {
     				this[0].className = k;
     			} else {
-    				var c = _self.class();
+    				var c = _self.classname();
         			var keys = erej.s(k).splits();
         			erej.each(keys, function(key) {
        					c.push(key);
@@ -515,11 +558,30 @@ erej.fn = {
             return this;
         return erej(selector, this);
     },
+
+    fire : function (type) {
+        if (!erej.isString(type))
+            return this;
+
+        this.each(function (elem) {
+            erej.event.fire(elem, type);
+        });
+
+        return this;
+    },
     
     get : function (idx) {
         return this[idx];
     },
-    
+
+    hasClass : function (classname) {
+        if (this.length == 0)
+            return this;
+
+        var c = erej.a(this.classname());
+        return c.contain(classname);
+    },
+
     html : function(v) {
         if (erej.isDefined(v)) {
         	if (this.length>0)
@@ -533,6 +595,12 @@ erej.fn = {
                 return this[0].innerHTML;
             }
         }
+    },
+
+    is : function (tag) {
+        if (this.length == 0)
+            return this;
+        return this.tag()==tag;
     },
     
     // type, callback, [delegate,] [data]
@@ -591,9 +659,32 @@ erej.type = function (obj) {
     return typeof obj;
 };
 
+
+// 遍历数组或对象，callback返回true，中断循环
+erej.each = function (arr, callback, asArray) {
+    if (!erej.isObject(arr))
+        return;
+    if (!erej.isFunction(callback))
+        return;
+    if (erej.isArray(arr) || erej.isErej(arr) || erej.isErejArray(arr)
+        || (asArray && erej.isDefined(arr.length)))
+    {
+        for (var i = 0; i < arr.length; i++)
+            if (callback.call(arr[i], arr[i], i))
+                break;
+    } else {
+        for (var k in arr) {
+            if (callback.call(arr[k], arr[k], k))
+                break;
+        }
+    }
+};
+
+
+
 erej.isObject = function (obj) {
 	// safari regard NodeList as function
-    return erej.type(obj)=="object" || erej.isNodeList(obj);
+    return erej.type(obj)=="object";
 };
 
 erej.isString = function (obj) {
@@ -613,10 +704,14 @@ erej.isLikeArray = function (obj) {
 };
 
 erej.isRegexp = function (obj) {
+    if (!erej.isDefined(obj))
+        return false;
     return obj instanceof RegExp;
 };
 
 erej.isNodeList = function (obj) {
+    if (!erej.isDefined(obj))
+        return false;
     return obj instanceof NodeList;
 };
 
@@ -625,10 +720,14 @@ erej.isFunction = function(obj) {
 };
 
 erej.isErej = function(obj) {
+    if (!erej.isDefined(obj))
+        return false;
     return obj instanceof erej.init;
 };
 
 erej.isErejArray = function(obj) {
+    if (!erej.isDefined(obj))
+        return false;
     return obj instanceof erej.a.init;
 };
 
@@ -643,26 +742,6 @@ erej.isDefined = function(obj) {
     return erej.type(obj)!="undefined";
 };
 
-// 遍历数组或对象，callback返回true，中断循环
-erej.each = function (arr, callback, asArray) {
-    if (!erej.isObject(arr))
-        return;
-    if (!erej.isFunction(callback))
-        return;
-    if (erej.isArray(arr) || erej.isErej(arr) || erej.isErejArray(arr)
-    	|| (asArray && erej.isDefined(arr.length)))
-    {
-        for (var i = 0; i < arr.length; i++)
-            if (callback.call(arr[i], arr[i], i))
-                break;
-    } else {
-        for (var k in arr) {
-            if (callback.call(arr[k], arr[k], k))
-                break;
-        }
-    }
-};
-
 erej.toArray = function (obj) {
     if (Array.prototype.slice)
         return Array.prototype.slice.call(obj);
@@ -674,7 +753,6 @@ erej.toArray = function (obj) {
         return res;
     }
 };
-
 
 erej.ready = function (callback) {
     if (erej_isReady)
@@ -743,6 +821,7 @@ erej.ready = function (callback) {
 
 
 
+
 // 数组方法集
 erej.a = function (arr) {
     return new erej.a.init(arr);
@@ -761,10 +840,45 @@ erej.a.init = function (arr) {
         _self.length = arr.length;
     }
 
-    return erej.z(this, erej.a.init.prototype);
+    return erej.pack(this, erej.a.init.prototype);
 };
 
 erej.a.init.prototype = {
+
+    merge : function (arr) {
+        if (!erej.isLikeArray(arr))
+            return this;
+
+        var res = this.toArray();
+        erej.each(arr, function (elem) {
+            res.push(elem);
+        }, true);
+        return erej.a(res);
+    },
+
+    push : function (elem) {
+        this[this.length++] = elem;
+        return this;
+    },
+
+    randomize : function() {
+        var res = this.toArray();
+        return Array.prototype.sort.call(res, function(){
+            return ((Math.random() * 3) | 0) - 1;
+        });
+        return erej.a(res);
+    },
+
+    remove : function (idx) {
+    	if (idx>=0 && idx < this.length) {
+    		for (var i=idx; i<this.length; i++)
+    			this[i] = this[i+1];
+    		delete this[this.length];
+    		this.length--;
+    	}
+    	return this;
+    },
+
     unique : function() {
         var res = [];
         var l = this.length;
@@ -776,51 +890,25 @@ erej.a.init.prototype = {
             res.push(this[i]);
         }
 
-        var _self = this;
-        erej.each(res, function (elem, i) {
-            _self[i] = res[i];
-        });
-        _self.length = res.length;
-        
-        return this;
-    },
-
-    randomize : function() {
-        return Array.prototype.sort.call(this, function(){
-            return ((Math.random() * 3) | 0) - 1;
-        });
-    },
-
-    merge : function (arr) {
-        if (!erej.isLikeArray(arr))
-            return this;
-
-        var _self = this;
-        erej.each(arr, function (elem) {
-            _self[_self.length++] = elem;
-        }, true);
-        return this;
-    },
-
-    push : function (elem) {
-        this[this.length++] = elem;
-        return this;
-    },
-    
-    remove : function (idx) {
-    	if (idx>=0 && idx < this.length) {
-    		for (var i=idx; i<this.length; i++)
-    			this[i] = this[i+1];
-    		delete this[this.length];
-    		this.length--;
-    	}
-    	return this;
+        return erej.a(res);
     },
 
     /* -----以下方法不可续接----- */
 
-    toArray : function () {
-        return erej.toArray(this);
+    contain : function (val) {
+        if (erej.isArray(val)) {
+            var res = true;
+            var _self = this;
+            erej.each(val, function (elem) {
+                if (!_self.contain(elem)) {
+                    res = false;
+                    return true;
+                }
+            });
+            return res;
+        } else {
+            return this.indexOf(val)!=-1;
+        }
     },
     
     indexOf : function (val) {
@@ -834,8 +922,8 @@ erej.a.init.prototype = {
         return res;
     },
 
-    contain : function (val) {
-        return this.indexOf(val)!=-1;
+    toArray : function () {
+        return erej.toArray(this);
     }
 };
 
@@ -853,38 +941,81 @@ erej.s.init = function(str) {
 };
 
 erej.s.init.prototype = {
-    trim : function () {
-        return erej.s(this.str.replace(/(^\s+)|(\s+$)/g, ""));
+
+    left : function (num) {
+        return erej.s(this.str.substr(0, num));
     },
 
     ltrim : function () {
         return erej.s(this.str.replace(/^\s+/g, ""));
     },
 
-    rtrim : function () {
-        return erej.s(this.str.replace(/\s+$/g, ""));
+    mid : function (leftNum, rightNum) {
+        return erej.s(this.str.substring(leftNum, this.str.length-rightNum));
     },
 
     replaceAll : function(from, to) {
         return erej.s(this.str.replace(new RegExp(from,'g'), to));
     },
 
-    left : function (num) {
-        return erej.s(this.str.substr(0, num));
-    },
-
     right : function (num) {
         return erej.s(this.str.substr(this.str.length-num, num));
     },
 
-    mid : function (leftNum, rightNum) {
-        return erej.s(this.str.substring(leftNum, this.str.length-rightNum));
+    rtrim : function () {
+        return erej.s(this.str.replace(/\s+$/g, ""));
+    },
+
+    trim : function () {
+        return erej.s(this.str.replace(/(^\s+)|(\s+$)/g, ""));
     },
 
     /* -----以下方法不可续接----- */
 
-    toString : function () {
-        return this.str;
+
+    // 返回bool
+    contain : function (key) {
+        if (erej.isArray(key)) {
+            var res = true;
+            var _self = this;
+            erej.each(key, function(elem) {
+                if (!_self.contain(elem)) {
+                    res = false;
+                    return true;
+                }
+            });
+            return res;
+        } else {
+            return this.str.indexOf(key)!=-1;
+        }
+    },
+
+    // 解码URI数据=PHP:rawurldecode
+    decode : function (component) {
+        if (component)
+            return decodeURIComponent(this.str);
+        else
+            return decodeURI(this.str);
+    },
+
+    // 编码URI数据=PHP:rawurlencode
+    encode : function (component) {
+        if (component)
+            return encodeURIComponent(this.str);
+        else
+            return encodeURI(this.str);
+    },
+
+    // 返回bool
+    endWith : function(str) {
+        return this.str.substr(this.str.length - str.length) == str;
+    },
+
+    // 返回bool
+    match : function(regexp) {
+        if (!erej.isRegexp(regexp))
+            return false;
+        return regexp.test(this.str);
     },
 
     size : function () {
@@ -899,56 +1030,15 @@ erej.s.init.prototype = {
         return this.trim().str.split(/\s+/);
     },
 
-    // 编码URI数据=PHP:rawurlencode
-    encode : function (component) {
-        if (component)
-            return encodeURIComponent(this.str);
-        else
-            return encodeURI(this.str);
-    },
-
-    // 解码URI数据=PHP:rawurldecode
-    decode : function (component) {
-        if (component)
-            return decodeURIComponent(this.str);
-        else
-            return decodeURI(this.str);
-    },
-
-    // 返回bool
-    contain : function (key) {
-        return this.str.indexOf(key)!=-1;
-    },
-
-    // 返回bool
-    contains : function (keys) {
-        var res = true;
-        var _s = this;
-        erej.each(keys, function(elem) {
-           if (!_s.contain(elem)) {
-               res = false;
-               return true;
-           }
-        });
-        return res;
-    },
-
     // 返回bool
     startWith : function(str) {
         return this.str.substr(0, str.length) == str;
     },
 
-    // 返回bool
-    endWith : function(str) {
-        return this.str.substr(this.str.length - str.length) == str;
-    },
-
-    // 返回bool
-    match : function(regexp) {
-        if (!erej.isRegexp(regexp))
-            return false;
-        return regexp.test(this.str);
+    toString : function () {
+        return this.str;
     }
+
 };
 
 erej.init.prototype = erej.fn;
