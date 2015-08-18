@@ -310,6 +310,8 @@ erej.event = {
     handle : function(event, handle) {
         console.log('handle guid:'+handle.guid+" type:"+handle.type);
 
+        event = event || window.event;
+
         if (!event.srcElement && event.target)
             event.srcElement = event.target;
 
