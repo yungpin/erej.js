@@ -126,7 +126,8 @@ div {
 			console.log('===============');
 			console.log(typeof Array.prototype.slice);
 			console.log(Array.prototype.slice.call({0:"000", 1:'111', length:2}));
-			console.log(erej.isNodeList(document.body.childNodes));
+			//console.log(erej.isNodeList(document.body.childNodes));
+			console.log(erej.isLikeArray(document.body.childNodes));
 		}
 
 		erej.ready(function() {
