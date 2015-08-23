@@ -124,7 +124,9 @@ div {
 			console.log("【isIE】:" + erej.browser.isIE());
 			console.log("【isMobile】:"+ erej.browser.isMobile());
 			console.log('===============');
-			
+			console.log(typeof Array.prototype.slice);
+			console.log(Array.prototype.slice.call({0:"000", 1:'111', length:2}));
+			console.log(erej.isNodeList(document.body.childNodes));
 		}
 
 		erej.ready(function() {

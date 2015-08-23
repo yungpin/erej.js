@@ -712,7 +712,7 @@ erej.isRegexp = function (obj) {
 };
 
 erej.isNodeList = function (obj) {
-    if (!erej.isDefined(obj))
+    if (!erej.isDefined(obj) || typeof NodeList == "undefined")
         return false;
     return obj instanceof NodeList;
 };
