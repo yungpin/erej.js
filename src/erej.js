@@ -699,10 +699,14 @@ erej.isArray = function (obj) {
     return obj instanceof Array;
 };
 
+erej.isNumber = function (obj) {
+    return erej.type(obj)=="number";
+}
+
 erej.isLikeArray = function (obj) {
-    if (!erej.isObject(obj))
+    if (!erej.isDefined(obj))
         return false;
-    return erej.isDefined(obj.length);
+    return erej.isNumber(obj.length);
 };
 
 erej.isRegexp = function (obj) {
@@ -868,7 +872,6 @@ erej.a.init.prototype = {
         return Array.prototype.sort.call(res, function(){
             return ((Math.random() * 3) | 0) - 1;
         });
-        return erej.a(res);
     },
 
     remove : function (idx) {
