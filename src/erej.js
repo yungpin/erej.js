@@ -382,7 +382,11 @@ erej.event = {
 },
 
 erej.fn = {
-    
+
+    at : function (idx) {
+        return erej(this[idx]);
+    },
+
     attr : function(k, v) {
     	if (this.length == 0)
     		return this;
