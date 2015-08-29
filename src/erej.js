@@ -118,7 +118,7 @@ erej.singleParse = function (selector, parent, isFilter) {
     function walkNodes(par, callback) {
         var ce = arguments.callee;
 
-        if (erej.isArray(par)) {
+        if (erej.isLikeArray(par)) {
             erej.each(par, function (elem) {
                 ce(elem, callback);
             })
@@ -173,7 +173,7 @@ erej.singleParse = function (selector, parent, isFilter) {
     } else if (s.match(/^[A-Za-z][A-Za-z0-9]*$/)) {
         // query by tagname
 
-        if (erej.isArray(parent) || erej.isErej(parent)) {
+        if (erej.isLikeArray(parent)) {
             var res = erej.a();
             erej.each(parent, function(elem) {
                 var arr = elem.getElementsByTagName(s.toString());
@@ -186,7 +186,7 @@ erej.singleParse = function (selector, parent, isFilter) {
         // query by attribute
 
         s = s.mid(1, 1).trim();
-        var m = s.toString().match(/^(.+)=.*"(.+)"$/);
+        var m = s.toString().match(/^(\S+).*=.*"(.+)"$/);
         if (m) {
             var k = m[1];
             var v = m[2];
@@ -218,7 +218,7 @@ erej.singleParse = function (selector, parent, isFilter) {
 };
 
 erej.select = function (selector, parent) {
-    if (!erej.isHtmlElement(parent))
+    if (!erej.isHtmlElement(parent) && !erej.isLikeArray(parent))
         parent = document;
 
     if (erej.isString(selector)) {
@@ -237,18 +237,6 @@ erej.select = function (selector, parent) {
                 reg.push('(\\.[A-Za-z][A-Za-z0-9-_]*)'); // class
                 reg.push('(\\[(([A-Za-z][A-Za-z0-9]*?)(?=).*?"(.+?)")\\])'); // attr
                 var regexp = new RegExp(reg.join('|'), 'g');
-
-                /*var m = regexp.exec(selector);//selector.match(regexp);
-                if (m) {
-                    //console.log(m);
-
-                    var res = parent;
-                    erej.each(m, function (sel) {
-                        res = erej.singleParse(sel, res);
-                    });
-
-                    return res;
-                }*/
 
                 var parms = [];
                 var lastIndex = [];
@@ -578,12 +566,14 @@ erej.fn = {
     
     each : function(callback) {
         erej.each(this, callback);
+
         return this;
     },
     
     find : function (selector) {
         if (this.length==0)
             return this;
+
         return erej(selector, this);
     },
 
@@ -611,17 +601,15 @@ erej.fn = {
     },
 
     html : function(v) {
+        if (this.length == 0)
+            return this;
+
         if (erej.isDefined(v)) {
-        	if (this.length>0)
-            	this[0].innerHTML = v;
+        	this[0].innerHTML = v;
             
             return this;
         } else {
-            if (this.length == 0) {
-                return '';
-            } else {
-                return this[0].innerHTML;
-            }
+            return this[0].innerHTML;
         }
     },
 
@@ -668,17 +656,15 @@ erej.fn = {
     },
     
     val : function(v) {
+        if (this.length == 0)
+            return this;
+
         if (erej.isDefined(v)) {
-        	if (this.length>0)
-        		this[0].value = v;
+        	this[0].value = v;
 
             return this;
         } else {
-            if (this.length == 0) {
-                return '';
-            } else {
-                return this[0].value;
-            }
+            return this[0].value;
         }
     }
 };
@@ -689,13 +675,13 @@ erej.type = function (obj) {
 
 
 // 遍历数组或对象，callback返回true，中断循环
-erej.each = function (arr, callback, asArray) {
+erej.each = function (arr, callback) {
     if (!erej.isObject(arr))
         return;
     if (!erej.isFunction(callback))
         return;
-    if (erej.isArray(arr) || erej.isErej(arr) || erej.isErejArray(arr)
-        || (asArray && erej.isDefined(arr.length)))
+
+    if (erej.isLikeArray(arr))
     {
         for (var i = 0; i < arr.length; i++)
             if (callback.call(arr[i], arr[i], i))
@@ -781,7 +767,7 @@ erej.toArray = function (obj) {
         var res = [];
         erej.each(obj, function (elem) {
             res.push(elem);
-        }, true);
+        });
         return res;
     }
 };
@@ -884,7 +870,7 @@ erej.a.init.prototype = {
         var res = this.toArray();
         erej.each(arr, function (elem) {
             res.push(elem);
-        }, true);
+        });
         return erej.a(res);
     },
 
