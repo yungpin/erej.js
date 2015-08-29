@@ -114,16 +114,22 @@ erej.init = function(selector, parent) {
 };
 
 // 始终返回数组
-erej.singleParse = function (selector, parent) {
+erej.singleParse = function (selector, parent, isFilter) {
     function walkNodes(par, callback) {
         var ce = arguments.callee;
 
-        erej.each(par.childNodes, function (elem) {
-            if (elem.nodeType == 1) {
-                callback.call(elem, elem);
+        if (erej.isArray(par)) {
+            erej.each(par, function (elem) {
                 ce(elem, callback);
-            }
-        });
+            })
+        } else {
+            erej.each(par.childNodes, function (elem) {
+                if (elem.nodeType == 1) {
+                    callback.call(elem, elem);
+                    ce(elem, callback);
+                }
+            });
+        }
     }
 
     var s = erej.s(selector).trim();
@@ -154,7 +160,7 @@ erej.singleParse = function (selector, parent) {
                 }
             }
 
-            if (erej.isArray(parent) || erej.isErej(parent)) {
+            if (isFilter) {//if (erej.isArray(parent) || erej.isErej(parent)) {
                 erej.each(parent, filter_class);
             } else {
                 walkNodes(parent, filter_class);
@@ -194,7 +200,7 @@ erej.singleParse = function (selector, parent) {
                     res.push(elem);
             }
 
-            if (erej.isArray(parent) || erej.isErej(parent)) {
+            if (isFilter) {//if (erej.isArray(parent) || erej.isErej(parent)) {
                 erej.each(parent, filter_attr);
             } else {
                 walkNodes(parent, filter_attr);
@@ -232,13 +238,29 @@ erej.select = function (selector, parent) {
                 reg.push('(\\[(([A-Za-z][A-Za-z0-9]*?)(?=).*?"(.+?)")\\])'); // attr
                 var regexp = new RegExp(reg.join('|'), 'g');
 
-                var m = selector.match(regexp);
+                /*var m = regexp.exec(selector);//selector.match(regexp);
                 if (m) {
                     //console.log(m);
 
                     var res = parent;
                     erej.each(m, function (sel) {
                         res = erej.singleParse(sel, res);
+                    });
+
+                    return res;
+                }*/
+
+                var parms = [];
+                var lastIndex = [];
+                while (m=regexp.exec(selector)) {
+                    parms.push(m[0]);
+                    lastIndex.push(regexp.lastIndex);
+                }
+                if (parms) {
+                    var res = parent;
+                    erej.each(parms, function (sel, i) {
+                        var isFilter = (i>0 && lastIndex[i-1]+sel.length==lastIndex[i]);
+                        res = erej.singleParse(sel, res, isFilter);
                     });
 
                     return res;
