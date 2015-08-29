@@ -138,7 +138,8 @@ erej.singleParse = function (selector, parent, isFilter) {
 
         s = s.right(s.size()-1);
         if (s.match(/^[A-Za-z][A-Za-z0-9-_:\.]*$/)) {
-            return [document.getElementById(s.toString())];
+            var t = document.getElementById(s.toString());
+            return t ? [t] : [];
         } else {
             throw "Invalid id of html element.";
         }
@@ -563,9 +564,25 @@ erej.fn = {
     		return res;
     	}
     },
+
+    disable : function () {
+        this.each(function (item) {
+            item.disabled = true;
+        });
+
+        return this;
+    },
     
     each : function(callback) {
         erej.each(this, callback);
+
+        return this;
+    },
+
+    enable : function () {
+        this.each(function (item) {
+            item.disabled = false;
+        });
 
         return this;
     },
@@ -659,11 +676,37 @@ erej.fn = {
         if (this.length == 0)
             return this;
 
+        var t = this.attr('type');
+
         if (erej.isDefined(v)) {
-        	this[0].value = v;
+            if (t=="radio") {
+                if (this.length>1) {
+                    this.each(function (elem) {
+                        if (v==elem.value) {
+                            elem.checked = true;
+                            return true;
+                        }
+                    });
+                    return this;
+                }
+            }
+
+            this[0].value = v;
 
             return this;
         } else {
+            if (t=="radio") {
+                if (this.length>1) {
+                    var res = "";
+                    this.each(function (elem) {
+                        if (elem.checked) {
+                            res = elem.value;
+                            return true;
+                        }
+                    });
+                    return res;
+                }
+            }
             return this[0].value;
         }
     }

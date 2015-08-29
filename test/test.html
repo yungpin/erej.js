@@ -62,14 +62,42 @@ div {
 <body>
 	<div class="leftbox">
 		<div id="main1" action="ok" name="12" style="color:red;font-size:20px;">1111111</div>
-		<div id="main2" name="13" action="test_123" class="b1">
+	  <div id="main2" name="13" action="test_123" class="b1">
 			<input type="text" value="123" />
 			<input type="radio" name="ra1" value="v1"/>
 			<input type="radio" name="ra1" value="v2"/>
-			<textarea>ko</textarea>
+		<textarea>ko</textarea>
 			
-		</div>
-		<div id="main3" class="a1" data-name="name3" data-id="id33" data-age="age333" class="cc1">3333333</div>
+	    <br>
+	    <br>
+	    <input type="file" name="fileField" id="fileField">
+        <br>
+        <p>
+          <label>
+            <input type="checkbox" name="mr1" value="11" id="mr1_0">
+            复选框1</label>
+          <br>
+          <label>
+            <input type="checkbox" name="mr1" value="22" id="mr1_1">
+            复选框2</label>
+          <br>
+          <label>
+            <input type="checkbox" name="mr1" value="33" id="mr1_2">
+            复选框3</label>
+          <br>
+          <select name="select" id="select">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select> 
+          <select name="select2" size="3" multiple id="select2">
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+          </select>
+        </p>
+      </div>
+		<div id="main3" class="a1" data-name="name3" data-id="id33" data-age="age333">3333333</div>
 	
 		<div id="main4">
 			44444
@@ -139,6 +167,10 @@ div {
 			$('#main5').on('click', f1, null, "data5555555");
 			$('#main4').on('click', f2, '[action="ok"]', "data4444444");
 			//alert(t.html());
+
+			$('#fileField').on('change', function (e) {
+				console.log(this.type+" : "+this.value);
+			})
 
 			//alert("123".startWith('1'));
 			showSysInfo();
