@@ -109,6 +109,9 @@
     };
 
     erej.init = function(selector, parent) {
+        if (erej.isErej(selector))
+            return selector;
+
         var _self = this;
         _self.length = 0;
 
@@ -404,6 +407,40 @@
 
     erej.fn = {
 
+        append : function (obj) {
+            if (!erej.isDefined(obj))
+                return this;
+            if (erej.isString(obj))
+                obj = $(obj);
+
+            if (erej.isErej(obj)) {
+                this.each(function (elem) {
+                    obj.each(function (item) {
+                        elem.appendChild(item);
+                    });
+                });
+            } else {
+                this.each(function (elem) {
+                    elem.appendChild(obj);
+                });
+            }
+
+            return this;
+        },
+
+        appendTo : function (obj) {
+            if (!erej.isObject(obj))
+                return this;
+
+            if (erej.isErej(obj)) {
+                obj.append(this);
+            } else {
+                $(obj).append(this);
+            }
+
+            return this;
+        },
+
         at : function (idx) {
             return erej(this[idx]);
         },
@@ -671,6 +708,14 @@
             return this;
         },
 
+        remove : function () {
+            this.each(function (elem) {
+                elem.parentNode.removeChild(elem);
+            });
+            this.length = 0;
+            return this;
+        },
+
         tag : function() {
             if (this.length == 0)
                 return this;
@@ -726,7 +771,6 @@
         return typeof obj;
     };
 
-
     // 遍历数组或对象，callback返回true，中断循环
     erej.each = function (arr, callback) {
         if (!erej.isObject(arr))
@@ -746,6 +790,38 @@
             }
         }
     };
+
+    erej.include = function (url, type, callback) {
+        var s;
+        var onFileLoad = function (e) {
+            //console.log("file included.")
+            //console.log(e);
+
+            if (erej.isFunction(callback))
+                callback.call(this, e);
+        };
+
+        if (type == "js") {
+            s = document.createElement("script");
+            s.type = "text/javascript";
+            s.onload = onFileLoad;
+            s.src = url;
+        } else if (type == "css") {
+            s = document.createElement("link");
+            s.rel = "stylesheet";
+            s.type = "text/css";
+            s.onload = onFileLoad;
+            s.href = url;
+            s.disabled = false;
+        } else {
+            return;
+        }
+
+        document.head.appendChild(s);
+
+        return s;
+    };
+
 
 
 
@@ -1012,6 +1088,10 @@
 
     erej.s.init.prototype = {
 
+        append: function (str) {
+            return erej.s(this.str+str);
+        },
+
         left : function (num) {
             return erej.s(this.str.substr(0, num));
         },
@@ -1038,6 +1118,14 @@
 
         trim : function () {
             return erej.s(this.str.replace(/(^\s+)|(\s+$)/g, ""));
+        },
+
+        toLower : function () {
+            return erej.s(this.str.toLowerCase());
+        },
+
+        toUper : function () {
+            return erej.s(this.str.toUpperCase());
         },
 
         /* -----以下方法不可续接----- */

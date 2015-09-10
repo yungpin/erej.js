@@ -57,10 +57,12 @@ div {
 	console.log = mylog;
 </script>
 <script src="../src/erej.js"></script>
+	<script src="../src/erej.ajax.js"></script>
 
 </head>
 <body>
 	<div class="leftbox">
+
 		<div id="main1" action="ok" name="12" style="color:red;font-size:20px;">1111111</div>
 	  <div id="main2" name="13" action="test_123" class="b1">
 			<input type="text" value="123" />
@@ -69,6 +71,7 @@ div {
 		<textarea>ko</textarea>
 			
 	    <br>
+		  <button id="testbtn">ajax</button>
 	    <br>
 	    <input type="file" name="fileField" id="fileField">
         <br>
@@ -113,6 +116,7 @@ div {
 		<div id="log"></div>
 	</div>
 	<div id="log2" class="logbox"></div>
+
 	<script>
 		function log(str) {
 			$('#log').html($('#log').html() + "<br>" + str);
@@ -183,6 +187,24 @@ div {
             });
 
             console.log($('#main4').css());
+
+			$('#testbtn').on('click', function (e) {
+				$.ajax({
+					"url": "/gz/PHP/api.php?act=test",
+					'jsonp': true,
+					'timeout': 3000,
+					"data": {
+						"user": "ok",
+						"pass": "okk"
+					},
+					"success": function(data) {
+						console.log(data);
+					},
+					"error": function(msg) {
+						console.log(msg);
+					}
+				});
+			})
 		});
 		
 		$(window).on('resize', function(e) {
