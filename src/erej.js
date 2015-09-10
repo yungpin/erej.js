@@ -1,5 +1,15 @@
 /**
+ * @preserve
+ *
  * Created by yungpin on 15/8/11.
+ *
+ * erej.js v1.1
+ *
+ * a personal website js library
+ *
+ * @author: yungping
+ * @website: http://www.erej.net
+ * @update: 2015-9-10 15:33:23
  */
 
 (function (win, doc) {
