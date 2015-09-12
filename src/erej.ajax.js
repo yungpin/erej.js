@@ -1,5 +1,15 @@
 /**
- * Created by erej on 2015/9/10 0010.
+ * @preserve
+ *
+ * Created by yungpin on 15/9/10.
+ *
+ * erej.ajax.js v1.1
+ *
+ * a personal website js library
+ *
+ * @author: yungping
+ * @website: http://www.erej.net
+ * @update: 2015-9-11 12:10:48
  */
 
 (function (win, doc) {
@@ -7,10 +17,6 @@
         alert("please import erej.js before this one");
         return;
     }
-
-    var xmlhttp;
-    var options;
-    var _self;
 
     var createAjax = function () {
         var xhr;
@@ -49,34 +55,34 @@
         }
     };
 
-    var onAjaxSuccess = function (data, status) {
-        if (erej.isFunction(options.success)) {
-            options.success.call(_self, data, status, xmlhttp);
+    var onAjaxSuccess = function (data, status, options) {
+        if (options.success) {
+            options.success.call(options.ajax, data, status, options.xhr);
         }
 
-        onAjaxComplete(status);
+        onAjaxComplete(status, options);
     };
 
-    var onAjaxError = function (msg, status) {
-        if (erej.isFunction(options.error)) {
-            options.error.call(_self, msg, status, xmlhttp);
+    var onAjaxError = function (msg, status, options) {
+        if (options.error) {
+            options.error.call(options.ajax, msg, status, options.xhr);
         }
 
-        onAjaxComplete(status);
+        onAjaxComplete(status, options);
     };
 
-    var onAjaxComplete = function (status) {
-        if (erej.isFunction(options.complete)) {
-            options.complete.call(_self, status, xmlhttp);
+    var onAjaxComplete = function (status, options) {
+        if (options.complete) {
+            options.complete.call(options.ajax, status, options.xhr);
         }
     };
 
-    var getAjaxHeaders = function () {
+    var getAjaxHeaders = function (options) {
         var res = {};
-        if (!xmlhttp)
+        if (!options.xhr)
             return res;
 
-        var headers = xmlhttp.getAllResponseHeaders();
+        var headers = options.xhr.getAllResponseHeaders();
         var lines = erej.s(headers).toLower().split("\n");
         erej.each(lines, function (line) {
             if (erej.s(line).trim()!="") {
@@ -88,8 +94,8 @@
         return res;
     };
 
-    var isResponseJson = function () {
-        var headers = getAjaxHeaders();
+    var isResponseJson = function (options) {
+        var headers = getAjaxHeaders(options);
         //console.log(headers);
         if (erej.s(headers['content-type']).contain('application/json'))
             return true;
@@ -97,58 +103,69 @@
             return false;
     };
 
-    var runAsAjax = function () {
-        xmlhttp = createAjax();
-        if (!xmlhttp) {
-            onAjaxError("浏览器不支持Ajax请求", 0);
+    var runAsAjax = function (options) {
+        options.xhr = createAjax();
+        if (!options.xhr) {
+            onAjaxError("浏览器不支持Ajax请求", 0, options);
             return;
         }
 
-        xmlhttp.onreadystatechange = function () {
+        options.xhr.onreadystatechange = function () {
             //console.log(this);
 
-            if (xmlhttp.readyState == 4) {
-                var status = xmlhttp.status;
-                if (isResponseJson()) {
+            if (options.xhr.readyState == 4) {
+                var status = options.xhr.status;
+                if (isResponseJson(options)) {
                     var res = {};
                     try {
-                        res = JSON.parse(xmlhttp.responseText);
+                        res = JSON.parse(options.xhr.responseText);
                     } catch(e) {
                         try {
-                            res = eval("("+xmlhttp.responseText+")");
+                            res = eval("("+options.xhr.responseText+")");
                         } catch(e) {
-                            onAjaxError("Invalid Json string:\n"+xmlhttp.responseText, 0);
+                            onAjaxError("Invalid Json string:\n"+options.xhr.responseText, 0, options);
                             return;
                         }
                     }
-                    onAjaxSuccess(res, xmlhttp.status);
+                    onAjaxSuccess(res, options.xhr.status, options);
                 } else {
-                    onAjaxSuccess(xmlhttp.responseText, xmlhttp.status);
+                    onAjaxSuccess(options.xhr.responseText, options.xhr.status, options);
                 }
             }
         };
 
         if (erej.isNumber(options.timeout) && options.timeout>0) {
             setTimeout(function () {
-                if (xmlhttp.readyState!=4) {
-                    _self.abort();
-                    onAjaxError("Ajax time out", 0);
+                if (options.xhr.readyState!=4) {
+                    options.ajax.abort();
+                    onAjaxError("Ajax time out", 0, options);
                 }
             }, options.timeout);
         }
 
         if (options.type=="GET") {
-            xmlhttp.open(options.type, constructUrl(options.url, options.data), true);
-            xmlhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            options.xhr.open(options.type, constructUrl(options.url, options.data), true);
+            options.xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         } else {
-            xmlhttp.open(options.type, options.url, true);
+            options.xhr.open(options.type, options.url, true);
         }
-        xmlhttp.send(options.type=="POST" ? options.data : null);
+
+        if (options.type=="POST") {
+            var d=options.data;
+            if (erej.isObject(d) && erej.isDefined(win.FormData) && !(d instanceof FormData)) {
+                d = Ajax.buildUrlParms(d);
+                options.xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            }
+            options.xhr.send(d);
+        } else {
+            options.xhr.send(null);
+        }
+
     };
 
-    var runAsJsonp = function () {
+    var runAsJsonp = function (options) {
         if (options.type!="GET") {
-            onAjaxError("Jsonp只支持GET请求方式", 0);
+            onAjaxError("Jsonp只支持GET请求方式", 0, options);
             return;
         }
 
@@ -157,21 +174,21 @@
         var _callback = 'callback'+(Math.floor(Math.random()*1000000));
 
         var _resetCallback = function () {
-            delete window[_callback];
+            delete win[_callback];
             $(_script).remove();
         };
 
-        window[_callback] = function (data) {
+        win[_callback] = function (data) {
             onAjaxSuccess(data, 200);
             _resetCallback();
         };
 
         if (erej.isNumber(options.timeout) && options.timeout>0) {
             setTimeout(function () {
-                if (erej.isFunction(window[_callback])) {
-                    window[_callback] = _resetCallback;
+                if (erej.isFunction(win[_callback])) {
+                    win[_callback] = _resetCallback;
 
-                    onAjaxError("Jsonp time out", 0);
+                    onAjaxError("Jsonp time out", 0, options);
                 }
             }, options.timeout);
         }
@@ -187,33 +204,43 @@
     };
 
     Ajax.init = function (opts) {
-        _self = this;
+        var options;
+        var _self = this;
+
+        if (!erej.isObject(opts))
+            return false;
 
         options = {
             "type": opts.type || "GET",
             "url": opts.url,
             "data": opts.data,
-            "success": opts.success,
-            "error": opts.error,
-            "complete": opts.complete,
+            "success": erej.isFunction(opts.success) ? opts.success : null,
+            "error": erej.isFunction(opts.error) ? opts.error : null,
+            "complete": erej.isFunction(opts.complete) ? opts.complete : null,
             "timeout": opts.timeout,
             "jsonp": opts.jsonp
         };
 
+        options.ajax = _self;
+
         if (options.jsonp) {
-            runAsJsonp();
+            runAsJsonp(options);
         } else {
-            runAsAjax();
+            runAsAjax(options);
         }
+
+        _self.options = options;
+
+        return _self;
     };
 
     Ajax.init.prototype = {
         abort: function() {
-            if (!xmlhttp)
+            if (!this.options.xhr)
                 return;
 
             try {
-                xmlhttp.abort();
+                this.options.xhr.abort();
             } catch(e) {}
         }
     };

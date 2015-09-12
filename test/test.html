@@ -106,6 +106,7 @@ div {
 			44444
 			<div id="main5" action="ok" class="a1 b1">
 				55555
+				<input name="user" type="text" placeholder="请输入账号" />
 				<div id="main6">
 					666666
 					<div id="main7">777777</div>
@@ -189,7 +190,13 @@ div {
             console.log($('#main4').css());
 
 			$('#testbtn').on('click', function (e) {
-				$.ajax({
+				debugger;
+				var a=$('.cc3');
+
+				var b=a;
+
+
+				/*$.ajax({
 					"url": "/gz/PHP/api.php?act=test",
 					'jsonp': true,
 					'timeout': 3000,
@@ -203,7 +210,7 @@ div {
 					"error": function(msg) {
 						console.log(msg);
 					}
-				});
+				});*/
 			})
 		});
 		

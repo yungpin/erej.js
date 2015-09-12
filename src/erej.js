@@ -136,7 +136,7 @@
                     ce(elem, callback);
                 })
             } else {
-                erej.each(par.childNodes, function (elem) {
+                erej.each(erej.toArray(par.childNodes), function (elem) {
                     if (elem.nodeType == 1) {
                         callback.call(elem, elem);
                         ce(elem, callback);
@@ -191,7 +191,7 @@
                 var res = erej.a();
                 erej.each(parent, function(elem) {
                     var arr = elem.getElementsByTagName(s.toString());
-                    res.merge(erej.toArray(arr));
+                    res = res.merge(erej.toArray(arr));
                 });
                 return res.toArray();
             }
@@ -239,11 +239,11 @@
             if (erej.s(selector).contain(['<', '>'])) {
                 var d = doc.createElement('div');
                 d.innerHTML = selector;
-                return d.childNodes;
+                return erej.toArray(d.childNodes);
             }  else {
 
                 if (parent.querySelectorAll && 0) {
-                    return parent.querySelectorAll(selector);
+                    return erej.toArray(parent.querySelectorAll(selector));
                 } else {
                     var reg = [];
                     reg.push('(#[A-Za-z][A-Za-z0-9-_:\\.]*)'); // id
@@ -332,7 +332,7 @@
         },
 
         handle : function(event, handle) {
-            console.log('handle guid:'+handle.guid+" type:"+handle.type);
+            //console.log('handle guid:'+handle.guid+" type:"+handle.type);
 
             event = event || win.event;
 
@@ -343,8 +343,12 @@
             if (handle.deleage) {
                 var c = erej(handle.deleage, handle.elem);
                 if (c.length > 0) {
-                    if (c[0].contains(event.srcElement))
-                        event.proxyElement = c[0];
+                    erej.each(c, function (elem) {
+                        if (elem.contains(event.srcElement)) {
+                            event.proxyElement = elem;
+                            return true;
+                        }
+                    });
                 }
             }
 
@@ -407,6 +411,23 @@
 
     erej.fn = {
 
+        addClass : function (v) {
+            if (this.length == 0)
+                return this;
+
+            if (!erej.isString(v))
+                return this;
+
+            var _toAdd = erej.a(erej.s(v).splits());
+
+            this.each(function (elem) {
+                var _newClass = _toAdd.merge($(elem).classname()).unique();
+                $(elem).classname(_newClass.toArray().join(' '));
+            });
+
+            return this;
+        },
+
         append : function (obj) {
             if (!erej.isDefined(obj))
                 return this;
@@ -453,11 +474,15 @@
                 return this.attrs();
             } else {
                 if (erej.isDefined(v)) {
-                    if (v===false)
-                        this[0].removeAttribute(k);
-                    else
-                        this[0].setAttribute(k, v);
-
+                    if (v===false) {
+                        this.each(function (elem) {
+                            elem.removeAttribute(k);
+                        });
+                    } else {
+                        this.each(function (elem) {
+                            elem.setAttribute(k, v);
+                        });
+                    }
                     return this;
                 } else {
                     return this[0].getAttribute(k);
@@ -490,29 +515,19 @@
             }
         },
 
-        classname : function(k, override) {
+        classname : function(v) {
             if (this.length == 0)
                 return this;
 
-            if (!erej.isDefined(k)) {
+            if (!erej.isDefined(v))
                 return erej.s(this[0].className).splits();
-            } else {
-                var _self = this;
 
-                if (erej.isString(k)) {
-                    if (override) {
-                        this[0].className = k;
-                    } else {
-                        var c = _self.classname();
-                        var keys = erej.s(k).splits();
-                        erej.each(keys, function(key) {
-                            c.push(key);
-                        });
-                        this[0].className = erej.a(c).unique().toArray().join(' ');
-                    }
-                }
-                return this;
-            }
+            if (erej.isString(v))
+                this.each(function (elem) {
+                    elem.className = v;
+                });
+
+            return this;
         },
 
         css : function(k, v) {
@@ -524,7 +539,9 @@
             } else {
                 if (erej.isString(k)) {
                     if (k=="") {
-                        this[0].style.cssText = "";
+                        this.each(function (elem) {
+                            elem.style.cssText = "";
+                        });
                         return this;
                     } else {
                         var obj = {};
@@ -557,7 +574,10 @@
                     erej.each(old, function(val, key) {
                         res.push(key+":"+val+";");
                     });
-                    this[0].style.cssText = res.join(' ');
+                    var _css = res.join(' ');
+                    this.each(function (elem) {
+                        elem.style.cssText = _css;
+                    });
                 }
                 return this;
             } else {
@@ -664,13 +684,22 @@
             return c.contain(classname);
         },
 
+        hide : function () {
+            this.each(function (elem) {
+                elem.style.display = "none";
+            });
+
+            return this;
+        },
+
         html : function(v) {
             if (this.length == 0)
                 return this;
 
             if (erej.isDefined(v)) {
-                this[0].innerHTML = v;
-
+                this.each(function (elem) {
+                    elem.innerHTML = v;
+                });
                 return this;
             } else {
                 return this[0].innerHTML;
@@ -708,11 +737,59 @@
             return this;
         },
 
+        opacity : function (v) {
+            this.each(function (elem) {
+                elem.style.opacity = v;
+            });
+
+            return this;
+        },
+
+        parent : function (selector) {
+            if (erej.isDefined(selector)) {
+
+            } else {
+                if (this.length == 0)
+                    return this;
+
+                return erej(this[0].parentNode);
+            }
+        },
+
         remove : function () {
             this.each(function (elem) {
                 elem.parentNode.removeChild(elem);
             });
             this.length = 0;
+            return this;
+        },
+
+        removeClass : function (v) {
+            if (this.length == 0)
+                return this;
+
+            if (!erej.isString(v))
+                return this;
+
+            var _toRm = erej.a(erej.s(v).splits());
+
+            this.each(function (elem) {
+                var _newClass = [];
+                erej.each($(elem).classname(), function (cls) {
+                    if (!_toRm.contain(cls))
+                        _newClass.push(cls);
+                });
+                $(elem).classname(_newClass.join(' '));
+            });
+
+            return this;
+        },
+
+        show : function () {
+            this.each(function (elem) {
+                elem.style.display = "block";
+            });
+
             return this;
         },
 
@@ -746,7 +823,9 @@
                     }
                 }
 
-                this[0].value = v;
+                this.each(function (elem) {
+                    elem.value = v;
+                });
 
                 return this;
             } else {
@@ -764,6 +843,14 @@
                 }
                 return this[0].value;
             }
+        },
+
+        zIndex : function (v) {
+            this.each(function (elem) {
+                elem.style.zIndex = v;
+            });
+
+            return this;
         }
     };
 
@@ -840,9 +927,13 @@
         return obj instanceof Array;
     };
 
+    erej.isBool = function (obj) {
+        return erej.type(obj)=="boolean";
+    };
+
     erej.isNumber = function (obj) {
         return erej.type(obj)=="number";
-    }
+    };
 
     erej.isLikeArray = function (obj) {
         if (!erej.isDefined(obj))
@@ -933,18 +1024,18 @@
             $(doc).on('DOMContentLoaded', onDomLoad);
             return;
         } else if ('attachEvent' in doc) {
-            console.log("readystatechange....");
+            //console.log("readystatechange....");
 
             $(doc).on("readystatechange", function(){
                 if (doc.readyState === "complete" ) {
-                    console.log("complete....");
+                    //console.log("complete....");
                     onDomLoad();
                 }
             });
 
             if (doc.documentElement.doScroll && erej.isDefined(win.frameElement)) {
                 // <= ie8
-                console.log("doscroll....");
+                //console.log("doscroll....");
 
                 (function () {
                     if (erej_isReady)
@@ -961,7 +1052,7 @@
             return;
         }
 
-        console.log("fall back....");
+        //console.log("fall back....");
 
         $(win).on('load', onDomLoad);
     };
@@ -1170,6 +1261,11 @@
         },
 
         // 返回bool
+        isBlank : function () {
+            return (this.trim().toString()=="");
+        },
+
+        // 返回bool
         match : function(regexp) {
             if (!erej.isRegexp(regexp))
                 return false;
@@ -1185,6 +1281,8 @@
         },
 
         splits : function () {
+            if (this.isBlank())
+                return [];
             return this.trim().str.split(/\s+/);
         },
 
