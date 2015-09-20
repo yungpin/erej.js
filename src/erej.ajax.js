@@ -175,7 +175,7 @@
 
         var _resetCallback = function () {
             delete win[_callback];
-            $(_script).remove();
+            erej(_script).remove();
         };
 
         win[_callback] = function (data) {

@@ -1,9 +1,9 @@
-<div class="erej-toast">
+<div class="erej-toast <%= data.classname %>">
     <div class="mask"></div>
     <div class="wrap">
         <div class="content">
-            <i class="erej-icon-loading"></i>
-            <span></span>
+            <i class="<%= data.icon %>"></i>
+            <span><%= data.msg %></span>
         </div>
     </div>
 </div>

@@ -66,9 +66,25 @@ div {
 		<div id="main1" action="ok" name="12" style="color:red;font-size:20px;">1111111</div>
 	  <div id="main2" name="13" action="test_123" class="b1">
 			<input type="text" value="123" />
-			<input type="radio" name="ra1" value="v1"/>
-			<input type="radio" name="ra1" value="v2"/>
+			<label>
+				<span>vvv1</span>
+				<input type="radio" name="ra1" value="v1"/>
+			</label>
+			<label>
+				<span>vvv2</span>
+				<input type="radio" name="ra1" value="v2"/>
+			</label>
 		<textarea>ko</textarea>
+		  <div>
+			  <label for="sex_2">
+				  <span>男</span>
+				  <input type="radio" name="sex" id="sex_2" value="b" checked="checked">
+			  </label>
+			  <label for="sex_1">
+				  <span>女</span>
+				  <input type="radio" name="sex" id="sex_1" value="g">
+			  </label>
+		  </div>
 			
 	    <br>
 		  <button id="testbtn">ajax</button>

@@ -37,12 +37,12 @@
 
     var changeText = function (options, msg) {
         options.msg = msg;
-        $('.content span', options.elem).html(options.msg);
+        erej('.content span', options.elem).html(options.msg);
     };
 
     var createWindow = function (options) {
         var _html = tpl(options.msg, options.icon, options.classname);
-        var _elem = $(_html).hide().zIndex(topZIndex++);
+        var _elem = erej(_html).hide().zIndex(topZIndex++);
         if (options.mask)
             _elem.find('.mask').show();
         else
