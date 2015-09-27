@@ -256,7 +256,6 @@
         return _arr.join("&");
     };
 
-
     erej.ajax = Ajax;
 
 })(window, document);

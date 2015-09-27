@@ -16,6 +16,7 @@ var banner = ['/**',
     ' * @version v<%= pkg.version %>',
     ' * @link <%= pkg.homepage %>',
     ' * @license <%= pkg.license %>',
+    ' * @Update <%= (new Date()).toGMTString() %>',
     ' */',
     ''].join('\n');
 
@@ -24,23 +25,46 @@ gulp.task('compilejs', function () {
         .pipe(concat('erej.all.js'))
         .pipe(gulp.dest('dist'))
         .pipe(uglify())
-        .pipe(rename('erej.all.min.js'))
+        .pipe(rename({ suffix: '.min' }))
         .pipe(header(banner, { pkg : pkg } ))
         .pipe(gulp.dest('dist'))
 })
 
 gulp.task('tpl', shell.task([
     'atpl -o ./tpl ./tpl/*.tpl'
-]))
+]));
 
-gulp.task('watch', function () {
+gulp.task('watchAll', function () {
     gulp.watch('src/*.js', function (e) {
-        console.log('file '+ e.file+' changed...');
+        console.log('file '+ e.path+' changed...');
         gulp.start('compilejs');
         console.log('compile js finished.')
     })
+});
+
+gulp.task('watchOne', function () {
+    gulp.watch('src/*.js', function (e) {
+        console.log('file '+ e.path+' changed...');
+
+        gulp.src(e.path)
+            .pipe(uglify())
+            .pipe(rename({ suffix: '.min' }))
+            .pipe(header(banner, { pkg : pkg } ))
+            .pipe(gulp.dest('dist'));
+
+        console.log('compile single js finished.')
+    })
+})
+
+gulp.task('buldEach', function () {
+    gulp.src('src/*.js')
+        .pipe(uglify())
+        .pipe(rename({ suffix: '.min' }))
+        .pipe(header(banner, { pkg : pkg } ))
+        .pipe(gulp.dest('dist'));
 })
 
 gulp.task('default', function () {
-
+    gulp.start('watchOne');
+    gulp.start('watchAll');
 })

@@ -34,6 +34,43 @@ div {
     .cc3 {
         color: yellow;
     }
+
+	#main3 {
+		background-color: aliceblue;
+		height: 72px;
+		position: relative;
+	}
+
+	.colorBlock {
+		display: inline-block;
+		width: 3%;
+		height: 24px;
+		background-color: #2788DA;
+		position: absolute;
+		left: 0;
+		top: 0;
+	}
+
+.colorBlock2 {
+	display: inline-block;
+	width: 3%;
+	height: 24px;
+	background-color: #ff793f;
+	position: absolute;
+	left: 0;
+	top: 24px;
+}
+
+.colorBlock3 {
+	display: inline-block;
+	width: 3%;
+	height: 24px;
+	background-color: #45da66;
+	position: absolute;
+	left: 0;
+	top: 48px;
+}
+
 </style>
 
 <script>
@@ -58,6 +95,7 @@ div {
 </script>
 <script src="../src/erej.js"></script>
 	<script src="../src/erej.ajax.js"></script>
+	<script src="../src/erej.anim.js"></script>
 
 </head>
 <body>
@@ -116,7 +154,11 @@ div {
           </select>
         </p>
       </div>
-		<div id="main3" class="a1" data-name="name3" data-id="id33" data-age="age333">3333333</div>
+		<div id="main3" class="a1" data-name="name3" data-id="id33" data-age="age333">
+			<span class="colorBlock"></span>
+			<span class="colorBlock2"></span>
+			<span class="colorBlock3"></span>
+		</div>
 	
 		<div id="main4">
 			44444
@@ -206,10 +248,12 @@ div {
             console.log($('#main4').css());
 
 			$('#testbtn').on('click', function (e) {
-				debugger;
-				var a=$('.cc3');
 
-				var b=a;
+
+				//debugger;
+				//var a=$('.cc3');
+
+				//var b=a;
 
 
 				/*$.ajax({
@@ -237,6 +281,51 @@ div {
                 //showSysInfo();
             //}
 		});
+
+		function setPos(sel, p) {
+			$(sel).css({position:"absolute", left: p+"%"});
+		}
+
+		function testAnim() {
+			var a = erej.animFrame({
+				long: 3000, type: "easeOutBounce", progress: function (p) {
+					setPos('.colorBlock', p)
+				}, finish: function () {
+					console.log('block1 finish.')
+				}, from: 0,
+				to: 97
+			});
+			var b = erej.animFrame({
+				long: 1000, type: "easeOutBack", progress: function (p) {
+					setPos('.colorBlock2', p)
+				}, finish: function () {
+					console.log('block2 finish.')
+				}, from: 0,
+				to: 97
+			});
+			var c = erej.animFrame({
+				long: 3000, type: "easeOutBounce", progress: function (p) {
+					setPos('.colorBlock3', p)
+				}, finish: function () {
+					console.log('block3 finish.')
+				}, from: 0,
+				to: 97
+			});
+
+			/*a.run();
+			 b.run();
+			 c.run();*/
+
+			var s = erej.anim({
+				finish: function () {
+					console.log('blocks finish.')
+				}
+			});
+
+			s = s.parallel(a, b).sleep(3000).serial(c);
+
+			s.run();
+		}
 	</script>
 	<iframe src="http://git.oschina.net/progit/" width="400" height="400"></iframe>
 </body>

@@ -1010,14 +1010,22 @@
     };
 
     erej.toArray = function (obj) {
-        if (Array.prototype.slice)
-            return Array.prototype.slice.call(obj);
-        else {
+        var f = function() {
             var res = [];
             erej.each(obj, function (elem) {
                 res.push(elem);
             });
             return res;
+        };
+
+        try {
+            if (Array.prototype.slice)
+                return Array.prototype.slice.call(obj);
+            else {
+                return f();
+            }
+        } catch(e) {
+            return f();
         }
     };
 
@@ -1325,6 +1333,7 @@
         }
 
     };
+
 
     erej.init.prototype = erej.fn;
 
