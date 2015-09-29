@@ -317,6 +317,7 @@ div {
 			 c.run();*/
 
 			var s = erej.anim({
+				times: erej.anim.INFINITE,
 				finish: function () {
 					console.log('blocks finish.')
 				}
@@ -325,6 +326,8 @@ div {
 			s = s.parallel(a, b).sleep(3000).serial(c);
 
 			s.run();
+
+			return s;
 		}
 	</script>
 	<iframe src="http://git.oschina.net/progit/" width="400" height="400"></iframe>

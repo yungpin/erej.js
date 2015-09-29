@@ -279,6 +279,8 @@
         return new Anim.init(opts);
     };
 
+    Anim.INFINITE = -0xabcdef;
+
     Anim.init = function (opts) {
         var options;
         var _self = this;
@@ -286,12 +288,12 @@
         options = {
             "frames": [],
             "finish": null,
-            "alive": false,
-            "current": 0
+            "alive": false
         };
 
         if (erej.isObject(opts)) {
             options.finish = erej.isFunction(opts.finish) ? opts.finish : null;
+            options.times = erej.isNumber(opts.times) ? opts.times : 1;
         }
 
         _self.options = options;
@@ -339,55 +341,74 @@
             if (this.options.alive)
                 return this;
             this.options.alive = true;
-            this.options.current = 0;
 
             var _self = this;
+
+            var leftTimes = _self.options.times;
+            var current = 0;
+            var oldFinishCnt = 0;
 
             (function () {
                 var f = arguments.callee;
 
                 if (!_self.options.alive)
                     return;
-                if (_self.options.current>=_self.options.frames.length) {
+
+                if (current>=_self.options.frames.length) {
                     if (_self.options.finish)
                         _self.options.finish.call(_self);
+
+                    if (leftTimes!==Anim.INFINITE)
+                        leftTimes--;
+
+                    if (leftTimes===Anim.INFINITE || leftTimes>0) {
+                        current = 0;
+                        f.call();
+                        return;
+                    }
+                    _self.options.alive = false;
+
                     return;
                 }
 
-                var aFrame = _self.options.frames[_self.options.current];
+                var aFrame = _self.options.frames[current++];
 
                 if (erej.isArray(aFrame)) {
-                    var oldFinishCnt = 0;
-                    var oldFinishs = [];
+                    oldFinishCnt = 0;
 
-                    erej.each(aFrame, function (frame, i) {
-                        oldFinishs.push(frame.options.finish);
-                        frame.options.finish = function () {
-                            if (oldFinishs[i])
-                                oldFinishs[i].apply(frame, arguments);
+                    erej.each(aFrame, function (frame) {
+                        if (!frame.options.srcFinishInit) {
+                            frame.options.srcFinish = frame.options.finish;
+                            frame.options.srcFinishInit = true;
 
-                            oldFinishCnt++;
-                            if (oldFinishCnt==oldFinishs.length)
-                                f.call();
-                        };
+                            frame.options.finish = function () {
+                                if (frame.options.srcFinish)
+                                    frame.options.srcFinish.apply(frame, arguments);
+
+                                oldFinishCnt++;
+                                if (oldFinishCnt==aFrame.length)
+                                    f.call();
+                            };
+                        }
 
                         frame.run();
                     });
 
                 } else {
-                    var oldFinish = aFrame.options.finish;
-                    aFrame.options.finish = function () {
-                        if (oldFinish)
-                            oldFinish.apply(aFrame, arguments);
+                    if (!aFrame.options.srcFinishInit) {
+                        aFrame.options.srcFinish = aFrame.options.finish;
+                        aFrame.options.srcFinishInit = true;
 
-                        f.call();
-                    };
+                        aFrame.options.finish = function () {
+                            if (aFrame.options.srcFinish)
+                                aFrame.options.srcFinish.apply(aFrame, arguments);
+
+                            f.call();
+                        };
+                    }
 
                     aFrame.run();
                 }
-
-
-                _self.options.current++;
             })();
 
             return this;
@@ -398,8 +419,18 @@
             this.options.current = 0;
 
             erej.each(this.options.frames, function (frame) {
-                frame.stop();
+                if (erej.isArray(frame)) {
+                    erej.each(frame, function (item) {
+                        item.stop();
+                    });
+                } else {
+                    frame.stop();
+                }
             });
+        },
+
+        isRunning: function() {
+            return this.options.alive;
         }
     };
 
