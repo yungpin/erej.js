@@ -97,10 +97,7 @@
     var isResponseJson = function (options) {
         var headers = getAjaxHeaders(options);
         //console.log(headers);
-        if (erej.s(headers['content-type']).contain('application/json'))
-            return true;
-        else
-            return false;
+        return erej.s(headers['content-type']).contain('application/json');
     };
 
     var runAsAjax = function (options) {
@@ -114,7 +111,7 @@
             //console.log(this);
 
             if (options.xhr.readyState == 4) {
-                var status = options.xhr.status;
+                //var status = options.xhr.status;
                 if (isResponseJson(options)) {
                     var res = {};
                     try {
@@ -250,9 +247,10 @@
             return "";
 
         var _arr = [];
-        for (var k in parms) {
-            _arr.push(encodeURIComponent(k)+"="+encodeURIComponent(parms[k]));
-        }
+        erej.each(parms, function (v, k) {
+            _arr.push(encodeURIComponent(k)+"="+encodeURIComponent(v));
+        });
+
         return _arr.join("&");
     };
 

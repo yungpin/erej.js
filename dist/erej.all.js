@@ -40,9 +40,9 @@
             if (this.agent.indexOf('msie')!=-1 || "ActiveXObject" in win)
                 return 'IE';
             else if (this.agent.indexOf('chrome/')!=-1)
-                return 'Chrome'
+                return 'Chrome';
             else if (this.agent.indexOf('firefox/')!=-1)
-                return 'Firefox'
+                return 'Firefox';
             else if (this.agent.indexOf('safari/')!=-1 && this.agent.indexOf('version/')!=-1)
                 return 'Safari';
             else if (this.agent.indexOf('opera/')!=-1 && this.agent.indexOf('version/')!=-1)
@@ -54,13 +54,13 @@
             if (this.agent.indexOf('windows nt')!=-1)
                 return 'Windows';
             else if (/android[\s|\/]/.test(this.agent))
-                return 'Android'
+                return 'Android';
             else if (this.agent.indexOf('mac os')!=-1)
-                return 'IOS'
+                return 'IOS';
             else if (this.agent.indexOf('windows phone')!=-1)
-                return 'WP'
+                return 'WP';
             else if (this.agent.indexOf('symbianos')!=-1)
-                return 'Symbian'
+                return 'Symbian';
             return 'unknown';
         },
 
@@ -233,7 +233,7 @@
             throw "Invalid selector.";
         }
 
-        return [];
+        //return [];
     };
 
     erej.select = function (selector, parent) {
@@ -259,6 +259,7 @@
 
                     var parms = [];
                     var lastIndex = [];
+                    var m;
                     while (m=regexp.exec(selector)) {
                         parms.push(m[0]);
                         lastIndex.push(regexp.lastIndex);
@@ -304,7 +305,7 @@
                 var guid = erej.event.getGuid(elem);
 
                 if (guid && erej_eventList[guid]) {
-                    erej.each(erej_eventList[guid], function (handle, i) {
+                    erej.each(erej_eventList[guid], function (handle) {
                         if (handle.type == type) {
                             var event = {
                                 'srcElement': srcElement,
@@ -361,7 +362,7 @@
         },
 
         off : function (elem, type, callback) {
-            var _self = this;
+            //var _self = this;
             var guid = erej.event.getGuid(elem);
             if (guid && erej_eventList[guid]) {
                 erej.each(erej_eventList[guid], function (handle, i) {
@@ -382,7 +383,7 @@
         },
 
         on : function (elem, type, callback, delegate, data, capture) {
-            var _self = this;
+            //var _self = this;
             var guid = erej.event.guid(elem);
 
             if (!erej.isArray(erej_eventList[guid]))
@@ -412,7 +413,7 @@
             else
                 elem['on'+type] = handle.callbackFn;
         }
-    },
+    };
 
     erej.fn = {
 
@@ -1105,7 +1106,7 @@
     erej.a.init = function (arr) {
         var _self = this;
 
-        this.arr = erej.isArray(arr) ? arr : [];
+        //this.arr = erej.isArray(arr) ? arr : [];
 
         this.length = 0;
         if (erej.isArray(arr)) {
@@ -1439,10 +1440,7 @@
     var isResponseJson = function (options) {
         var headers = getAjaxHeaders(options);
         //console.log(headers);
-        if (erej.s(headers['content-type']).contain('application/json'))
-            return true;
-        else
-            return false;
+        return erej.s(headers['content-type']).contain('application/json');
     };
 
     var runAsAjax = function (options) {
@@ -1456,7 +1454,7 @@
             //console.log(this);
 
             if (options.xhr.readyState == 4) {
-                var status = options.xhr.status;
+                //var status = options.xhr.status;
                 if (isResponseJson(options)) {
                     var res = {};
                     try {
@@ -1592,9 +1590,10 @@
             return "";
 
         var _arr = [];
-        for (var k in parms) {
-            _arr.push(encodeURIComponent(k)+"="+encodeURIComponent(parms[k]));
-        }
+        erej.each(parms, function (v, k) {
+            _arr.push(encodeURIComponent(k)+"="+encodeURIComponent(v));
+        });
+
         return _arr.join("&");
     };
 
