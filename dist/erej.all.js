@@ -851,6 +851,16 @@
                         });
                         return this;
                     }
+                } else if (t=="checkbox") {
+                    if (erej.isArray(v)) {
+                        var a = erej.a(v);
+                        this.each(function (elem) {
+                            if (a.contain(elem.value)) {
+                                elem.checked = true;
+                            }
+                        });
+                        return this;
+                    }
                 }
 
                 this.each(function (elem) {
@@ -866,6 +876,16 @@
                             if (elem.checked) {
                                 res = elem.value;
                                 return true;
+                            }
+                        });
+                        return res;
+                    }
+                } else if (t=="checkbox") {
+                    if (this.length>1) {
+                        var res = [];
+                        this.each(function (elem) {
+                            if (elem.checked) {
+                                res.push(elem.value);
                             }
                         });
                         return res;
