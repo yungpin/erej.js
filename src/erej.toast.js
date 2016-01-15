@@ -18,7 +18,7 @@
         return;
     }
 
-    var topZIndex = 1000;
+    var topZIndex = 2000;
 
     var tpl = function (msg, icon, classname) {
         var html = "";
