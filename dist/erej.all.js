@@ -815,6 +815,27 @@
             return this;
         },
 
+        replace : function (obj) {
+            if (!erej.isDefined(obj))
+                return this;
+            if (erej.isString(obj))
+                obj = erej(obj);
+
+            if (erej.isErej(obj)) {
+                this.each(function (elem) {
+                    obj.each(function (item) {
+                        elem.parentNode.replaceChild(item, elem);
+                    });
+                });
+            } else {
+                this.each(function (elem) {
+                    elem.parentNode.replaceChild(obj, elem);
+                });
+            }
+            this.length = 0;
+            return this;
+        },
+
         show : function (visibility) {
             if (erej.isDefined(visibility)) {
                 if (visibility=="visible") {
@@ -2151,7 +2172,7 @@
             onToastHide(options);
         } else {
             var f = function () {
-                options.elem.show();
+                options.elem.show('table');
                 onToastShow(options);
 
                 if (options.timeout) {

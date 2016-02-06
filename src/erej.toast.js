@@ -61,7 +61,7 @@
             onToastHide(options);
         } else {
             var f = function () {
-                options.elem.show();
+                options.elem.show('table');
                 onToastShow(options);
 
                 if (options.timeout) {
