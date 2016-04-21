@@ -120,13 +120,19 @@
             "timeout": erej.isNumber(opts.timeout) ? opts.timeout : 0, //自动关闭
             "delay": erej.isNumber(opts.delay) ? opts.delay : 0, //延迟显示
             "onshow": erej.isFunction(opts.onshow) ? opts.onshow : null,
-            "onhide": erej.isFunction(opts.onhide) ? opts.onhide : null
+            "onhide": erej.isFunction(opts.onhide) ? opts.onhide : null,
+            "hideOnClick": erej.isBool(opts.hideOnClick) ? opts.hideOnClick : false
         };
 
         options.toast = _self;
         options.elem = createWindow(options);
         options.timerDelay = null;
         options.timerTimeout = null;
+
+        erej(options.elem).on('click', function () {
+            if (options.hideOnClick)
+                showAndHideWindow(options, true);
+        });
 
         showAndHideWindow(options, options.hide);
 

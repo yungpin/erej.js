@@ -213,6 +213,7 @@ div {
 			console.log("【kernel】:" + erej.browser.kernel() + " @"	+ erej.browser.ver());
 			console.log("【os】:" + erej.browser.os() + " @"	+ erej.browser.osVer());
 			console.log("【isIE】:" + erej.browser.isIE());
+			console.log("【isMoz】:" + erej.browser.isMoz());
 			console.log("【isMobile】:"+ erej.browser.isMobile());
 			console.log('===============');
 			console.log(typeof Array.prototype.slice);
@@ -329,6 +330,10 @@ div {
 
 			return s;
 		}
+
+		erej(document).on('mousewheel', function (e) {
+			console.log(e.delta);
+		})
 	</script>
 	<iframe src="http://git.oschina.net/progit/" width="400" height="400"></iframe>
 </body>

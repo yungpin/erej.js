@@ -3,7 +3,7 @@
  *
  * Created by yungpin on 15/8/11.
  *
- * erej.js v1.1
+ * erej.js v1.2
  *
  * a personal website js library
  *
@@ -105,6 +105,10 @@
                     return (/version\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
             }
             return 0;
+        },
+
+        isMoz: function () {
+            return (this.kernel()=='Firefox');
         }
     };
 
@@ -363,6 +367,14 @@
                 }
             }
 
+            if (event.type=='mousewheel' || event.type=='DOMMouseScroll') {
+                if (event.wheelDelta) {
+                    event.delta = event.wheelDelta / 120;
+                } else if (event.detail) {
+                    event.delta = -(event.detail / 3);
+                }
+            }
+
             handle.callback.call(handle.elem, event, handle.data);
         },
 
@@ -393,6 +405,10 @@
 
             if (!erej.isArray(erej_eventList[guid]))
                 erej_eventList[guid] = [];
+
+            if (type=='mousewheel' && erej.browser.isMoz()) {
+                type = 'DOMMouseScroll';
+            }
 
             var handle = {
                 'guid' : guid,

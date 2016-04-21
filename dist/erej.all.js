@@ -3,7 +3,7 @@
  *
  * Created by yungpin on 15/8/11.
  *
- * erej.js v1.1
+ * erej.js v1.2
  *
  * a personal website js library
  *
@@ -105,6 +105,10 @@
                     return (/version\/([^\s|;]+)/ig.test(this.agent) ? RegExp.$1 : 0);
             }
             return 0;
+        },
+
+        isMoz: function () {
+            return (this.kernel()=='Firefox');
         }
     };
 
@@ -363,6 +367,14 @@
                 }
             }
 
+            if (event.type=='mousewheel' || event.type=='DOMMouseScroll') {
+                if (event.wheelDelta) {
+                    event.delta = event.wheelDelta / 120;
+                } else if (event.detail) {
+                    event.delta = -(event.detail / 3);
+                }
+            }
+
             handle.callback.call(handle.elem, event, handle.data);
         },
 
@@ -393,6 +405,10 @@
 
             if (!erej.isArray(erej_eventList[guid]))
                 erej_eventList[guid] = [];
+
+            if (type=='mousewheel' && erej.browser.isMoz()) {
+                type = 'DOMMouseScroll';
+            }
 
             var handle = {
                 'guid' : guid,
@@ -2231,13 +2247,19 @@
             "timeout": erej.isNumber(opts.timeout) ? opts.timeout : 0, //自动关闭
             "delay": erej.isNumber(opts.delay) ? opts.delay : 0, //延迟显示
             "onshow": erej.isFunction(opts.onshow) ? opts.onshow : null,
-            "onhide": erej.isFunction(opts.onhide) ? opts.onhide : null
+            "onhide": erej.isFunction(opts.onhide) ? opts.onhide : null,
+            "hideOnClick": erej.isBool(opts.hideOnClick) ? opts.hideOnClick : false
         };
 
         options.toast = _self;
         options.elem = createWindow(options);
         options.timerDelay = null;
         options.timerTimeout = null;
+
+        erej(options.elem).on('click', function () {
+            if (options.hideOnClick)
+                showAndHideWindow(options, true);
+        });
 
         showAndHideWindow(options, options.hide);
 
